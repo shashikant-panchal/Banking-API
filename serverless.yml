@@ -1,0 +1,106 @@
+service: banking-api-assessment
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: local
+  region: ${env:AWS_REGION, 'us-east-1'}
+  environment:
+    DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, 'http://localhost:8000'}
+    CUSTOMERS_TABLE: ${env:CUSTOMERS_TABLE, 'Customers'}
+    ACCOUNTS_TABLE: ${env:ACCOUNTS_TABLE, 'Accounts'}
+  # IAM is unused for local DynamoDB; kept for realism if you later deploy to AWS
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+            - dynamodb:Scan
+          Resource: "*"
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    httpPort: 3000
+    noPrependStageInUrl: true
+
+functions:
+  docsUi:
+    handler: src/handlers/docs.ui
+    events:
+      - http:
+          path: docs
+          method: get
+
+  openapiSpec:
+    handler: src/handlers/docs.openapi
+    events:
+      - http:
+          path: openapi.yaml
+          method: get
+
+  createCustomer:
+    handler: src/handlers/customers.create
+    events:
+      - http:
+          path: customers
+          method: post
+
+  getCustomer:
+    handler: src/handlers/customers.get
+    events:
+      - http:
+          path: customers/{customerId}
+          method: get
+
+  createAccount:
+    handler: src/handlers/accounts.create
+    events:
+      - http:
+          path: customers/{customerId}/accounts
+          method: post
+
+  listAccounts:
+    handler: src/handlers/accounts.list
+    events:
+      - http:
+          path: customers/{customerId}/accounts
+          method: get
+
+  getAccount:
+    handler: src/handlers/accounts.get
+    events:
+      - http:
+          path: accounts/{accountId}
+          method: get
+
+  # Optional stretch goals — stubs included for mid-senior candidates
+  deposit:
+    handler: src/handlers/transactions.deposit
+    events:
+      - http:
+          path: accounts/{accountId}/deposits
+          method: post
+
+  withdraw:
+    handler: src/handlers/transactions.withdraw
+    events:
+      - http:
+          path: accounts/{accountId}/withdrawals
+          method: post
+
+  transfer:
+    handler: src/handlers/transactions.transfer
+    events:
+      - http:
+          path: transfers
+          method: post

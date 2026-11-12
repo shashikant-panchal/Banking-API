@@ -1,0 +1,377 @@
+openapi: 3.0.3
+info:
+  title: Banking API Assessment
+  description: |
+    Simple retail-banking REST API for the Node.js hiring assessment.
+
+    Implement the handlers so responses match this contract.
+    Core endpoints are required for all candidates.
+    Deposit / withdraw / transfer are stretch goals for mid-senior candidates.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local serverless-offline
+
+tags:
+  - name: Customers
+  - name: Accounts
+  - name: Transactions
+
+paths:
+  /customers:
+    post:
+      tags: [Customers]
+      summary: Create a customer
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+            example:
+              fullName: Ada Lovelace
+              email: ada@example.com
+      responses:
+        "201":
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /customers/{customerId}:
+    get:
+      tags: [Customers]
+      summary: Get a customer by id
+      operationId: getCustomer
+      parameters:
+        - $ref: "#/components/parameters/customerId"
+      responses:
+        "200":
+          description: Customer found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /customers/{customerId}/accounts:
+    post:
+      tags: [Accounts]
+      summary: Create an account for a customer
+      operationId: createAccount
+      parameters:
+        - $ref: "#/components/parameters/customerId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAccountRequest"
+            example:
+              type: CHECKING
+              currency: CAD
+              initialBalance: 100.0
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    get:
+      tags: [Accounts]
+      summary: List accounts for a customer
+      operationId: listAccounts
+      parameters:
+        - $ref: "#/components/parameters/customerId"
+      responses:
+        "200":
+          description: Account list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountList"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /accounts/{accountId}:
+    get:
+      tags: [Accounts]
+      summary: Get an account (includes balance)
+      operationId: getAccount
+      parameters:
+        - $ref: "#/components/parameters/accountId"
+      responses:
+        "200":
+          description: Account found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /accounts/{accountId}/deposits:
+    post:
+      tags: [Transactions]
+      summary: Deposit funds (stretch)
+      operationId: deposit
+      parameters:
+        - $ref: "#/components/parameters/accountId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AmountRequest"
+            example:
+              amount: 50.0
+              currency: CAD
+      responses:
+        "200":
+          description: Deposit applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /accounts/{accountId}/withdrawals:
+    post:
+      tags: [Transactions]
+      summary: Withdraw funds (stretch)
+      operationId: withdraw
+      parameters:
+        - $ref: "#/components/parameters/accountId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AmountRequest"
+            example:
+              amount: 25.0
+              currency: CAD
+      responses:
+        "200":
+          description: Withdrawal applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /transfers:
+    post:
+      tags: [Transactions]
+      summary: Transfer between accounts (stretch)
+      operationId: transfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferRequest"
+            example:
+              fromAccountId: acct_001
+              toAccountId: acct_002
+              amount: 10.0
+              currency: CAD
+      responses:
+        "200":
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransferResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+components:
+  parameters:
+    customerId:
+      name: customerId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: cust_001
+    accountId:
+      name: accountId
+      in: path
+      required: true
+      schema:
+        type: string
+      example: acct_001
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Conflict:
+      description: Business rule conflict (e.g. insufficient funds)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    CreateCustomerRequest:
+      type: object
+      required: [fullName, email]
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+
+    Customer:
+      type: object
+      required: [customerId, fullName, email, status, createdAt]
+      properties:
+        customerId:
+          type: string
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateAccountRequest:
+      type: object
+      required: [type, currency]
+      properties:
+        type:
+          type: string
+          enum: [CHECKING, SAVINGS]
+        currency:
+          type: string
+          enum: [CAD, USD]
+        initialBalance:
+          type: number
+          minimum: 0
+          default: 0
+
+    Account:
+      type: object
+      required:
+        - accountId
+        - customerId
+        - type
+        - currency
+        - balance
+        - status
+        - createdAt
+      properties:
+        accountId:
+          type: string
+        customerId:
+          type: string
+        type:
+          type: string
+          enum: [CHECKING, SAVINGS]
+        currency:
+          type: string
+          enum: [CAD, USD]
+        balance:
+          type: number
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        createdAt:
+          type: string
+          format: date-time
+
+    AccountList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Account"
+
+    AmountRequest:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        currency:
+          type: string
+          enum: [CAD, USD]
+
+    TransferRequest:
+      type: object
+      required: [fromAccountId, toAccountId, amount, currency]
+      properties:
+        fromAccountId:
+          type: string
+        toAccountId:
+          type: string
+        amount:
+          type: number
+          exclusiveMinimum: 0
+        currency:
+          type: string
+          enum: [CAD, USD]
+
+    TransferResult:
+      type: object
+      required: [fromAccount, toAccount]
+      properties:
+        fromAccount:
+          $ref: "#/components/schemas/Account"
+        toAccount:
+          $ref: "#/components/schemas/Account"
+
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: BAD_REQUEST
+        message:
+          type: string
+          example: email is required

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Banking API — Live Verification Report</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #0d1117; color: #c9d1d9; margin: 0; padding: 30px; }
+    h1 { color: #58a6ff; font-size: 26px; border-bottom: 1px solid #30363d; padding-bottom: 12px; margin-bottom: 24px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 13px; }
+    .badge-get { background: #238636; color: #fff; }
+    .badge-post { background: #1f6feb; color: #fff; }
+    .badge-status-200 { background: #238636; color: #fff; }
+    .badge-status-201 { background: #238636; color: #fff; }
+    .badge-status-409 { background: #da3633; color: #fff; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .card-title { font-size: 16px; font-weight: bold; color: #f0f6fc; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+    pre { background: #090d13; border: 1px solid #21262d; border-radius: 6px; padding: 12px; color: #7ee787; font-size: 13px; line-height: 1.4; overflow-x: auto; margin: 6px 0 0 0; }
+    .section-label { font-size: 12px; text-transform: uppercase; color: #8b949e; letter-spacing: 0.5px; margin-top: 10px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>🏦 Banking API Assessment — Live Verification Report</h1>
+  <p style="color: #8b949e; margin-bottom: 25px;">Server running locally on <strong>http://localhost:3000</strong> with DynamoDB storage.</p>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-get">GET</span>
+        <span>1. GET /customers/cust_001 (Fetch seeded customer)</span>
+        <span class="badge badge-status-200" style="margin-left: auto;">HTTP 200</span>
+      </div>
+      
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "customerId": "cust_001",
+  "fullName": "Ada Lovelace",
+  "email": "ada@example.com",
+  "status": "ACTIVE",
+  "createdAt": "2026-11-12T07:07:21.061Z"
+}</pre>
+    </div>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-post">POST</span>
+        <span>2. POST /customers (Create new customer)</span>
+        <span class="badge badge-status-201" style="margin-left: auto;">HTTP 201</span>
+      </div>
+      <div class="section-label">Request Body</div><pre>{
+  "fullName": "Katherine Johnson",
+  "email": "katherine@nasa.gov"
+}</pre>
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "customerId": "cust_2056b14c-b73e-4054-a5e1-e488fca24621",
+  "fullName": "Katherine Johnson",
+  "email": "katherine@nasa.gov",
+  "status": "ACTIVE",
+  "createdAt": "2026-11-12T07:17:00.856Z"
+}</pre>
+    </div>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-post">POST</span>
+        <span>3. POST /customers/cust_2056b14c-b73e-4054-a5e1-e488fca24621/accounts (Create account)</span>
+        <span class="badge badge-status-201" style="margin-left: auto;">HTTP 201</span>
+      </div>
+      <div class="section-label">Request Body</div><pre>{
+  "type": "CHECKING",
+  "currency": "CAD",
+  "initialBalance": 500
+}</pre>
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "accountId": "acct_e846a778-217c-4240-b822-8f750f2260cd",
+  "customerId": "cust_2056b14c-b73e-4054-a5e1-e488fca24621",
+  "type": "CHECKING",
+  "currency": "CAD",
+  "balance": 500,
+  "status": "OPEN",
+  "createdAt": "2026-11-12T07:17:01.030Z"
+}</pre>
+    </div>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-get">GET</span>
+        <span>4. GET /customers/cust_2056b14c-b73e-4054-a5e1-e488fca24621/accounts (List customer accounts via GSI Query)</span>
+        <span class="badge badge-status-200" style="margin-left: auto;">HTTP 200</span>
+      </div>
+      
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "items": [
+    {
+      "accountId": "acct_e846a778-217c-4240-b822-8f750f2260cd",
+      "customerId": "cust_2056b14c-b73e-4054-a5e1-e488fca24621",
+      "type": "CHECKING",
+      "currency": "CAD",
+      "balance": 500,
+      "status": "OPEN",
+      "createdAt": "2026-11-12T07:17:01.030Z"
+    }
+  ]
+}</pre>
+    </div>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-get">GET</span>
+        <span>5. GET /accounts/acct_e846a778-217c-4240-b822-8f750f2260cd (Get account including balance)</span>
+        <span class="badge badge-status-200" style="margin-left: auto;">HTTP 200</span>
+      </div>
+      
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "accountId": "acct_e846a778-217c-4240-b822-8f750f2260cd",
+  "customerId": "cust_2056b14c-b73e-4054-a5e1-e488fca24621",
+  "type": "CHECKING",
+  "currency": "CAD",
+  "balance": 500,
+  "status": "OPEN",
+  "createdAt": "2026-11-12T07:17:01.030Z"
+}</pre>
+    </div>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-post">POST</span>
+        <span>6. POST /accounts/acct_e846a778-217c-4240-b822-8f750f2260cd/deposits (Credit balance by $150)</span>
+        <span class="badge badge-status-200" style="margin-left: auto;">HTTP 200</span>
+      </div>
+      <div class="section-label">Request Body</div><pre>{
+  "amount": 150,
+  "currency": "CAD"
+}</pre>
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "accountId": "acct_e846a778-217c-4240-b822-8f750f2260cd",
+  "customerId": "cust_2056b14c-b73e-4054-a5e1-e488fca24621",
+  "type": "CHECKING",
+  "currency": "CAD",
+  "balance": 650,
+  "status": "OPEN",
+  "createdAt": "2026-11-12T07:17:01.030Z"
+}</pre>
+    </div>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-post">POST</span>
+        <span>7. POST /accounts/acct_e846a778-217c-4240-b822-8f750f2260cd/withdrawals (Debit balance by $50)</span>
+        <span class="badge badge-status-200" style="margin-left: auto;">HTTP 200</span>
+      </div>
+      <div class="section-label">Request Body</div><pre>{
+  "amount": 50,
+  "currency": "CAD"
+}</pre>
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "accountId": "acct_e846a778-217c-4240-b822-8f750f2260cd",
+  "customerId": "cust_2056b14c-b73e-4054-a5e1-e488fca24621",
+  "type": "CHECKING",
+  "currency": "CAD",
+  "balance": 600,
+  "status": "OPEN",
+  "createdAt": "2026-11-12T07:17:01.030Z"
+}</pre>
+    </div>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-post">POST</span>
+        <span>8. POST /transfers (Atomic transfer: $25 CAD from acct_001 to acct_002)</span>
+        <span class="badge badge-status-200" style="margin-left: auto;">HTTP 200</span>
+      </div>
+      <div class="section-label">Request Body</div><pre>{
+  "fromAccountId": "acct_001",
+  "toAccountId": "acct_002",
+  "amount": 25,
+  "currency": "CAD"
+}</pre>
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "fromAccount": {
+    "accountId": "acct_001",
+    "customerId": "cust_001",
+    "type": "CHECKING",
+    "currency": "CAD",
+    "balance": 175,
+    "status": "OPEN",
+    "createdAt": "2026-11-12T07:07:21.061Z"
+  },
+  "toAccount": {
+    "accountId": "acct_002",
+    "customerId": "cust_001",
+    "type": "SAVINGS",
+    "currency": "CAD",
+    "balance": 1075,
+    "status": "OPEN",
+    "createdAt": "2026-11-12T07:07:21.061Z"
+  }
+}</pre>
+    </div>
+  
+    <div class="card">
+      <div class="card-title">
+        <span class="badge badge-post">POST</span>
+        <span>9. POST /transfers (Insufficient funds guard -> 409 Conflict)</span>
+        <span class="badge badge-status-409" style="margin-left: auto;">HTTP 409</span>
+      </div>
+      <div class="section-label">Request Body</div><pre>{
+  "fromAccountId": "acct_001",
+  "toAccountId": "acct_002",
+  "amount": 999999,
+  "currency": "CAD"
+}</pre>
+      <div class="section-label">Response Body</div>
+      <pre>{
+  "error": "CONFLICT",
+  "message": "Insufficient funds"
+}</pre>
+    </div>
+  
+</body>
+</html>
