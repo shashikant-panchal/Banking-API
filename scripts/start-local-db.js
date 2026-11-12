@@ -7,7 +7,11 @@ const server = dynalite({ createTableMs: 0 });
 
 server.listen(port, (err) => {
   if (err) {
-    console.error(`Failed to start DynamoDB Local on port ${port}:`, err);
+    if (err.code === "EADDRINUSE") {
+      console.log(`Port ${port} is already in use (DynamoDB Local is already running).`);
+      process.exit(0);
+    }
+    console.error(`Failed to start DynamoDB Local on port ${port}:`, err.message);
     process.exit(1);
   }
   console.log(`DynamoDB Local (in-memory) listening at http://localhost:${port}`);
@@ -19,4 +23,3 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   server.close(() => process.exit(0));
 });
-

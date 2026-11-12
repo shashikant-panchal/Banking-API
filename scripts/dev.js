@@ -3,6 +3,7 @@
 const { spawn, execSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const net = require("net");
 
 console.log("=== Starting Banking API Local Environment ===");
 
@@ -14,36 +15,74 @@ if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
   console.log("✓ Auto-created .env from .env.example");
 }
 
-// 1. Start local DynamoDB process
-const dbProcess = spawn("node", [path.join(__dirname, "start-local-db.js")], {
-  stdio: "inherit",
-  shell: true,
-});
+function checkPort(port) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(500);
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once("error", () => {
+      resolve(false);
+    });
+    socket.once("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.connect(port, "127.0.0.1");
+  });
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function start() {
-  await sleep(1200);
+  let dbProcess = null;
 
-  console.log("\n=== Initializing Tables & Seeding Data ===");
-  try {
-    execSync("node scripts/create-tables.js", { stdio: "inherit" });
-    execSync("node scripts/seed.js", { stdio: "inherit" });
-  } catch (err) {
-    console.error("Table initialization notice:", err.message);
+  // 1. Check if DynamoDB is already running on port 8000
+  const isDbRunning = await checkPort(8000);
+  if (isDbRunning) {
+    console.log("✓ DynamoDB Local is already running on http://localhost:8000");
+  } else {
+    dbProcess = spawn(process.execPath, [path.join(__dirname, "start-local-db.js")], {
+      stdio: "inherit",
+    });
+    await sleep(1000);
   }
 
-  console.log("\n=== Starting API Gateway / Serverless Server ===");
-  const sls = spawn("node", [path.join(__dirname, "..", "node_modules", "serverless", "bin", "serverless.js"), "offline", "start", "--httpPort", "3000"], {
+  // 2. Initialize tables and seed
+  console.log("\n=== Initializing Tables & Seeding Data ===");
+  try {
+    execSync(`"${process.execPath}" "${path.join(__dirname, "create-tables.js")}"`, {
+      stdio: "inherit",
+    });
+    execSync(`"${process.execPath}" "${path.join(__dirname, "seed.js")}"`, {
+      stdio: "inherit",
+    });
+  } catch (err) {
+    console.error("Table initialization warning:", err.message);
+  }
+
+  // 3. Start Serverless Offline
+  console.log("\n=== Starting API Server on http://localhost:3000 ===");
+  const serverlessBin = path.join(
+    __dirname,
+    "..",
+    "node_modules",
+    "serverless",
+    "bin",
+    "serverless.js"
+  );
+
+  const sls = spawn(process.execPath, [serverlessBin, "offline", "start", "--httpPort", "3000"], {
     stdio: "inherit",
-    shell: true,
   });
 
   const cleanup = () => {
     try {
-      dbProcess.kill();
+      if (dbProcess) dbProcess.kill();
     } catch {}
     try {
       sls.kill();
@@ -56,5 +95,4 @@ async function start() {
   sls.on("close", cleanup);
 }
 
-start();
-
+start().catch(console.error);
