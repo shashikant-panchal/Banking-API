@@ -36,13 +36,24 @@ async function tableExists(tableName) {
 async function recreateTable(tableName, definition) {
   if (await tableExists(tableName)) {
     console.log(`Deleting existing table: ${tableName}`);
-    await client.send(new DeleteTableCommand({ TableName: tableName }));
-    // DynamoDB Local is fast; brief wait is enough for in-memory mode
-    await new Promise((r) => setTimeout(r, 300));
+    try {
+      await client.send(new DeleteTableCommand({ TableName: tableName }));
+    } catch (e) {
+      if (e.name !== "ResourceNotFoundException") throw e;
+    }
+    await new Promise((r) => setTimeout(r, 600));
   }
 
   console.log(`Creating table: ${tableName}`);
-  await client.send(new CreateTableCommand(definition));
+  try {
+    await client.send(new CreateTableCommand(definition));
+  } catch (err) {
+    if (err.name === "ResourceInUseException") {
+      console.log(`Table ${tableName} is already ready.`);
+    } else {
+      throw err;
+    }
+  }
 }
 
 async function main() {

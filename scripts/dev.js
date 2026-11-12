@@ -3,7 +3,6 @@
 const { spawn, execSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
-const net = require("net");
 
 console.log("=== Starting Banking API Local Environment ===");
 
@@ -15,44 +14,56 @@ if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
   console.log("✓ Auto-created .env from .env.example");
 }
 
-function checkPort(port) {
-  return new Promise((resolve) => {
-    const socket = new net.Socket();
-    socket.setTimeout(500);
-    socket.once("connect", () => {
-      socket.destroy();
-      resolve(true);
-    });
-    socket.once("error", () => {
-      resolve(false);
-    });
-    socket.once("timeout", () => {
-      socket.destroy();
-      resolve(false);
-    });
-    socket.connect(port, "127.0.0.1");
-  });
+function freePort(port) {
+  try {
+    const cmd = process.platform === "win32"
+      ? `netstat -ano | findstr :${port}`
+      : `lsof -i :${port} -t`;
+    const output = execSync(cmd, { encoding: "utf8", stdio: ["pipe", "pipe", "ignore"] });
+    if (!output) return;
+
+    if (process.platform === "win32") {
+      const lines = output.trim().split("\n");
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        const pid = parts[parts.length - 1];
+        if (pid && pid !== "0" && pid !== process.pid.toString()) {
+          try {
+            execSync(`taskkill /F /PID ${pid}`, { stdio: "ignore" });
+            console.log(`✓ Cleaned up process ${pid} on port ${port}`);
+          } catch {}
+        }
+      }
+    } else {
+      const pids = output.trim().split("\n");
+      for (const pid of pids) {
+        if (pid) {
+          try {
+            execSync(`kill -9 ${pid}`, { stdio: "ignore" });
+          } catch {}
+        }
+      }
+    }
+  } catch {}
 }
+
+// Clean up any stale processes from previous runs
+freePort(8000);
+freePort(3000);
+freePort(3002);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function start() {
-  let dbProcess = null;
+  // 1. Start local DynamoDB
+  const dbProcess = spawn(process.execPath, [path.join(__dirname, "start-local-db.js")], {
+    stdio: "inherit",
+  });
+  await sleep(1500);
 
-  // 1. Check if DynamoDB is already running on port 8000
-  const isDbRunning = await checkPort(8000);
-  if (isDbRunning) {
-    console.log("✓ DynamoDB Local is already running on http://localhost:8000");
-  } else {
-    dbProcess = spawn(process.execPath, [path.join(__dirname, "start-local-db.js")], {
-      stdio: "inherit",
-    });
-    await sleep(1000);
-  }
-
-  // 2. Initialize tables and seed
+  // 2. Initialize tables & seed
   console.log("\n=== Initializing Tables & Seeding Data ===");
   try {
     execSync(`"${process.execPath}" "${path.join(__dirname, "create-tables.js")}"`, {
@@ -82,11 +93,14 @@ async function start() {
 
   const cleanup = () => {
     try {
-      if (dbProcess) dbProcess.kill();
+      dbProcess.kill();
     } catch {}
     try {
       sls.kill();
     } catch {}
+    freePort(8000);
+    freePort(3000);
+    freePort(3002);
     process.exit(0);
   };
 
