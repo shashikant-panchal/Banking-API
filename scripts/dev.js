@@ -2,8 +2,17 @@
 
 const { spawn, execSync } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 
 console.log("=== Starting Banking API Local Environment ===");
+
+// Auto-create .env from .env.example if missing
+const envPath = path.join(__dirname, "..", ".env");
+const envExamplePath = path.join(__dirname, "..", ".env.example");
+if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
+  fs.copyFileSync(envExamplePath, envPath);
+  console.log("✓ Auto-created .env from .env.example");
+}
 
 // 1. Start local DynamoDB process
 const dbProcess = spawn("node", [path.join(__dirname, "start-local-db.js")], {
