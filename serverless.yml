@@ -40,6 +40,9 @@ functions:
       - http:
           path: docs
           method: get
+      - http:
+          path: /
+          method: get
 
   openapiSpec:
     handler: src/handlers/docs.openapi
