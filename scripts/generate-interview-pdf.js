@@ -15,45 +15,42 @@ const html = `<!DOCTYPE html>
   <title>Banking API Assessment — Technical Interview Preparation Guide</title>
   <style>
     @page {
-      margin: 14mm 16mm;
+      margin: 11mm 13mm;
       size: A4 portrait;
     }
-    *, *:before, *:after {
-      box-sizing: border-box;
-    }
+    *, *:before, *:after { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #1f2937;
       background: #ffffff;
-      line-height: 1.5;
-      font-size: 13.5px;
+      line-height: 1.45;
+      font-size: 12.5px;
       margin: 0;
       padding: 0;
     }
     .header {
-      border-bottom: 2px solid #2563eb;
-      padding-bottom: 12px;
-      margin-bottom: 18px;
+      border-bottom: 2.5px solid #2563eb;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
     }
     .header h1 {
-      margin: 0 0 6px 0;
-      font-size: 24px;
+      margin: 0 0 4px 0;
+      font-size: 21px;
       color: #1e3a8a;
       letter-spacing: -0.5px;
     }
     .header .subtitle {
-      font-size: 13px;
+      font-size: 12px;
       color: #4b5563;
-      margin: 0;
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
     }
     .badge {
       display: inline-block;
-      padding: 3px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -61,13 +58,14 @@ const html = `<!DOCTYPE html>
     .badge-blue { background: #dbeafe; color: #1e40af; }
     .badge-green { background: #dcfce7; color: #166534; }
     .badge-purple { background: #f3e8ff; color: #6b21a8; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
 
     h2 {
       color: #1e40af;
-      font-size: 16px;
+      font-size: 14.5px;
       border-left: 4px solid #2563eb;
       padding-left: 8px;
-      margin: 20px 0 10px 0;
+      margin: 16px 0 8px 0;
       page-break-after: avoid;
     }
 
@@ -75,16 +73,16 @@ const html = `<!DOCTYPE html>
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 6px;
-      padding: 12px 14px;
-      margin-bottom: 14px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
       page-break-inside: avoid;
     }
 
     .q-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: #0f172a;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -92,42 +90,42 @@ const html = `<!DOCTYPE html>
     .q-title span.number {
       background: #2563eb;
       color: #fff;
-      padding: 2px 7px;
+      padding: 1px 6px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10.5px;
     }
 
     .answer-box {
       background: #ffffff;
       border-left: 3px solid #10b981;
-      padding: 8px 12px;
-      margin-top: 6px;
+      padding: 7px 11px;
+      margin-top: 5px;
       border-radius: 0 4px 4px 0;
     }
     .answer-box .label {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       text-transform: uppercase;
       color: #059669;
       letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
     .answer-box p {
-      margin: 4px 0;
+      margin: 3px 0;
       color: #334155;
     }
 
     ul {
-      margin: 4px 0 6px 18px;
+      margin: 3px 0 5px 16px;
       padding: 0;
     }
     li {
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
 
     code {
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 12px;
+      font-size: 11px;
       background: #f1f5f9;
       padding: 1px 4px;
       border-radius: 3px;
@@ -137,12 +135,12 @@ const html = `<!DOCTYPE html>
     .cheat-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 12.5px;
+      margin-top: 6px;
+      font-size: 11.5px;
     }
     .cheat-table th, .cheat-table td {
       border: 1px solid #cbd5e1;
-      padding: 6px 10px;
+      padding: 5px 8px;
       text-align: left;
     }
     .cheat-table th {
@@ -155,9 +153,9 @@ const html = `<!DOCTYPE html>
       background: #eff6ff;
       border: 1px solid #bfdbfe;
       border-radius: 6px;
-      padding: 10px 14px;
-      margin-top: 10px;
-      font-size: 12.5px;
+      padding: 8px 12px;
+      margin-top: 8px;
+      font-size: 11.5px;
       page-break-inside: avoid;
     }
     .callout strong {
@@ -174,8 +172,8 @@ const html = `<!DOCTYPE html>
   <div class="header">
     <h1>Banking API Assessment — Technical Interview Guide</h1>
     <div class="subtitle">
-      <span><strong>Candidate Interview Preparation Sheet</strong> &bull; Node.js, Lambda, DynamoDB</span>
-      <span><span class="badge badge-green">37 Tests Passing</span> <span class="badge badge-blue">OpenAPI 3.0 Conforming</span> <span class="badge badge-purple">Stretch Goals Completed</span></span>
+      <span><strong>Candidate Interview Preparation Sheet</strong> &bull; Node.js, Serverless, DynamoDB</span>
+      <span><span class="badge badge-green">79 Tests Passing</span> <span class="badge badge-purple">JWT Middleware</span> <span class="badge badge-blue">4-Tier Clean Architecture</span></span>
     </div>
   </div>
 
@@ -183,13 +181,15 @@ const html = `<!DOCTYPE html>
   <div class="card">
     <div class="answer-box">
       <div class="label">What to say when asked: "Walk me through what you built"</div>
-      <p><em>"I built a production-grade retail banking REST API following the <strong>API Gateway &rarr; Lambda &rarr; DynamoDB</strong> pattern, conforming strictly to the OpenAPI 3.0 specification.</em></p>
-      <p><em>I completed all <strong>Core CRUD endpoints</strong> for Customers and Accounts, plus all <strong>Stretch Goal Transaction endpoints</strong> (Deposits, Withdrawals, and atomic Transfers).</em></p>
-      <p><em>My design focused on three engineering priorities:</em></p>
+      <p><em>"I built a production-grade retail banking REST API following a <strong>4-Tier Clean Architecture</strong> (Controllers, Validators, Services, Repositories, and Middlewares) adhering to the OpenAPI 3.0 specification.</em></p>
+      <p><em>Every API endpoint is protected by a <strong>JWT authentication middleware</strong> requiring valid Bearer tokens.</em></p>
+      <p><em>I implemented all <strong>Core CRUD operations</strong> for Customers and Accounts, plus all <strong>Stretch Goal Transaction operations</strong> (atomic Deposits, overdraft-guarded Withdrawals, and cross-account Transfers).</em></p>
+      <p><em>Key architectural highlights:</em></p>
       <ul>
-        <li><strong>Efficient Access Patterns:</strong> Used a Global Secondary Index (GSI) with <code>Query</code> instead of expensive table <code>Scan</code>s for customer account listings.</li>
-        <li><strong>Financial Consistency & ACID Transactions:</strong> Implemented DynamoDB <code>TransactWriteItems</code> for cross-account transfers to guarantee all-or-nothing execution with zero risk of partial failure.</li>
-        <li><strong>Rigorous Verification:</strong> Built a 37-test automated test suite using <code>node:test</code> and <code>aws-sdk-client-mock</code> covering happy paths, input validation, and concurrency collisions with 0 failures."</em></li>
+        <li><strong>Strict Layer Separation:</strong> Handlers are thin controllers; Validators enforce input contracts; Services house financial business logic; and Repositories isolate DynamoDB commands.</li>
+        <li><strong>Zero Table Scans:</strong> Utilized point reads and a Global Secondary Index (GSI) <code>CustomerIdIndex</code> for $O(1)$ partition queries when listing accounts.</li>
+        <li><strong>ACID Financial Transfers:</strong> Implemented DynamoDB <code>TransactWriteItems</code> to execute atomic debits and credits with zero risk of partial failure.</li>
+        <li><strong>Automated Testing:</strong> Authored <strong>79 unit tests across 26 test suites</strong> with 0 failures using <code>node:test</code> and <code>aws-sdk-client-mock</code>."</em></li>
       </ul>
     </div>
   </div>
@@ -197,30 +197,30 @@ const html = `<!DOCTYPE html>
   <h2>2. Core Technical Questions & How to Answer</h2>
 
   <div class="card">
-    <div class="q-title"><span class="number">Q1</span> How did you design your DynamoDB access patterns, especially for listing customer accounts?</div>
+    <div class="q-title"><span class="number">Q1</span> Why did you separate the code into Controllers, Validators, Services, and Repositories?</div>
     <div class="answer-box">
       <div class="label">Answer Script</div>
-      <p><strong>Point Reads (O(1)):</strong> Customers (<code>customerId</code>) and Accounts (<code>accountId</code>) use direct <code>GetCommand</code> by partition key.</p>
-      <p><strong>Listing Accounts by Customer (<code>GET /customers/{id}/accounts</code>):</strong></p>
+      <p><strong>Clean Architecture & Single Responsibility Principle (SRP):</strong></p>
       <ul>
-        <li>In DynamoDB, the <code>Accounts</code> primary key is <code>accountId</code>. A naive approach would use a <code>Scan</code> with a filter expression. However, <strong>Scan is an anti-pattern in production</strong> because it scans the entire dataset ($O(N)$), consuming unbounded Read Capacity Units (RCUs) and increasing latency.</li>
-        <li>Instead, I queried the <strong><code>CustomerIdIndex</code> Global Secondary Index (GSI)</strong> using <code>QueryCommand</code> with <code>KeyConditionExpression: "customerId = :customerId"</code>. This targets only the relevant partition, achieving $O(1)$ partition lookup with minimal RCU consumption.</li>
-        <li>I also verify that the customer exists beforehand so that invalid IDs return a proper <code>404 Not Found</code> rather than an ambiguous empty list.</li>
+        <li><strong>Controllers (<code>src/handlers/</code>):</strong> Pure presentation logic. They parse HTTP requests, extract parameters, invoke validators and services, and format HTTP response envelopes (200, 201, 400, etc.). They have no database queries or business rules.</li>
+        <li><strong>Validators (<code>src/validators/</code>):</strong> Pure validation functions. They fail fast right at the gateway boundary, rejecting malformed emails, invalid enums, negative balances, or fractional cents before hitting business logic or database layers.</li>
+        <li><strong>Services (<code>src/services/</code>):</strong> Domain business logic. Services enforce banking rules: verifying that parent customers exist, checking accounts are <code>OPEN</code>, verifying currency matching, and checking for sufficient funds (409 Conflict). They are completely decoupled from HTTP status codes and AWS SDK specifics.</li>
+        <li><strong>Repositories (<code>src/repositories/</code>):</strong> Data access abstraction. They encapsulate all DynamoDB commands (<code>GetCommand</code>, <code>PutCommand</code>, <code>QueryCommand</code>, <code>UpdateCommand</code>, <code>TransactWriteCommand</code>). This allows database schema changes or index tuning without touching business rules.</li>
       </ul>
     </div>
   </div>
 
   <div class="card">
-    <div class="q-title"><span class="number">Q2</span> How did you implement transfers and handle partial failures or concurrency?</div>
+    <div class="q-title"><span class="number">Q2</span> How does the JWT Authentication Middleware work across all APIs?</div>
     <div class="answer-box">
       <div class="label">Answer Script</div>
-      <p><strong>The Partial Failure Risk:</strong> In financial transfers, if a debit succeeds but the subsequent credit fails (network timeout or system crash), customer funds vanish. If credit succeeds but debit fails, money is created.</p>
-      <p><strong>My Solution — DynamoDB ACID Transactions (<code>TransactWriteItems</code>):</strong></p>
+      <p><strong>Bearer Token Guard via <code>withAuth</code> Higher-Order Function:</strong></p>
       <ul>
-        <li>I bundled the debit (<code>SET balance = balance - :amount</code>) and credit (<code>SET balance = balance + :amount</code>) into a single <code>TransactWriteCommand</code>. Both operations execute atomically across DynamoDB items—either both commit or both roll back.</li>
-        <li><strong>Optimistic Concurrency Guards:</strong> On the debit item, I added <code>ConditionExpression: "balance >= :amount AND #status = :openStatus AND currency = :currency"</code>.</li>
-        <li><strong>Race Condition Handling:</strong> If two transfers hit concurrently and deplete the balance, DynamoDB aborts the transaction with <code>TransactionCanceledException</code>. My handler catches this and returns a clean <code>409 Conflict</code>.</li>
-        <li><strong>Production Idempotency:</strong> In production, I would accept a <code>ClientRequestToken</code> / <code>Idempotency-Key</code> header to prevent duplicate execution upon client retries.</li>
+        <li>Every banking handler is wrapped with <code>withAuth(handler)</code> from <code>src/middlewares/auth.middleware.js</code>.</li>
+        <li>It inspects the <code>Authorization: Bearer &lt;token&gt;</code> header (case-insensitively).</li>
+        <li>If the header is missing, malformed, or has an invalid/expired token, it immediately intercepts and returns <code>401 Unauthorized</code> with <code>{ error: "UNAUTHORIZED", message: "..." }</code>.</li>
+        <li>Upon valid verification using <code>jsonwebtoken</code> and <code>JWT_SECRET</code>, it attaches the decoded user payload to <code>event.user</code> so downstream controllers and services can access caller identity.</li>
+        <li>I also created a dedicated endpoint <code>POST /auth/token</code> that generates valid signed HS256 tokens for API consumers and automated tests.</li>
       </ul>
     </div>
   </div>
@@ -230,40 +230,59 @@ const html = `<!DOCTYPE html>
   <h2>2. Core Technical Questions & How to Answer (Continued)</h2>
 
   <div class="card">
-    <div class="q-title"><span class="number">Q3</span> How did you handle deposits and withdrawals?</div>
+    <div class="q-title"><span class="number">Q3</span> How did you design your DynamoDB access patterns and queries in the Repository layer?</div>
     <div class="answer-box">
       <div class="label">Answer Script</div>
+      <p><strong>Point Reads ($O(1)$) and GSI Query vs. Table Scan ($O(N)$):</strong></p>
       <ul>
-        <li><strong>Atomic Balance Updates:</strong> Rather than performing a vulnerable read-modify-write in Node.js, I used DynamoDB's native <code>UpdateCommand</code> with <code>SET balance = balance + :amount</code> (deposit) and <code>SET balance = balance - :amount</code> (withdraw).</li>
-        <li><strong>Overdraft Prevention:</strong> Withdrawals enforce <code>ConditionExpression: "balance >= :amount"</code>. This guarantees that balance can never drop below zero even under concurrent requests. If the condition fails, it returns <code>409 Conflict</code>.</li>
-        <li><strong>Account State & Currency Validation:</strong> Both operations verify that the account is <code>OPEN</code> and that the deposit/withdrawal currency strictly matches the account currency.</li>
+        <li><strong>Point Reads:</strong> Customer and Account lookups by ID use <code>GetCommand</code> targeting their respective partition keys (<code>customerId</code>, <code>accountId</code>) for consistent single-digit millisecond latency.</li>
+        <li><strong>Querying Customer Accounts (<code>GET /customers/{id}/accounts</code>):</strong> In DynamoDB, the <code>Accounts</code> table primary key is <code>accountId</code>. Running a <code>Scan</code> with a filter expression is a major production anti-pattern because it reads the entire table, consuming unbounded Read Capacity Units (RCUs).</li>
+        <li><strong>GSI Solution:</strong> In <code>account.repository.js</code>, I query the <strong><code>CustomerIdIndex</code> Global Secondary Index</strong> using <code>QueryCommand</code> with <code>KeyConditionExpression: "customerId = :customerId"</code>. This targets only the specific customer's partition in the index, achieving $O(1)$ partition isolation.</li>
+        <li><strong>Repository Encapsulation:</strong> All AWS SDK commands (<code>GetCommand</code>, <code>PutCommand</code>, <code>DeleteCommand</code>, <code>QueryCommand</code>, <code>UpdateCommand</code>, <code>TransactWriteCommand</code>) reside solely in the repository layer.</li>
       </ul>
     </div>
   </div>
 
   <div class="card">
-    <div class="q-title"><span class="number">Q4</span> How did you handle input validation and financial precision?</div>
+    <div class="q-title"><span class="number">Q4</span> How did you implement cross-account transfers and handle concurrency?</div>
     <div class="answer-box">
       <div class="label">Answer Script</div>
+      <p><strong>The Double-Spend / Partial Failure Risk:</strong> In financial transfers, if debit succeeds but credit fails (e.g., timeout or crash), funds vanish. If credit succeeds but debit fails, money is minted.</p>
+      <p><strong>My Solution — DynamoDB ACID Transactions (<code>TransactWriteItems</code>):</strong></p>
       <ul>
-        <li><strong>Schema Conformance:</strong> Matched all OpenAPI schemas. Malformed bodies, missing fields, or invalid types return <code>400 Bad Request</code> with <code>{ error: "BAD_REQUEST", message: "..." }</code>.</li>
-        <li><strong>Floating-Point Precision:</strong> IEEE-754 floating-point arithmetic can introduce fractional-cent artifacts (e.g. 0.1 + 0.2 = 0.30000000000000004). To prevent exploits and rounding issues, I enforced that all amounts must be finite numbers with at most <strong>2 decimal places</strong> (cents).</li>
-        <li><strong>Status Rules:</strong> Closed accounts are blocked from receiving funds or originating transactions. Self-transfers (same from and to account) are explicitly rejected with <code>400 Bad Request</code>.</li>
+        <li>In <code>account.repository.js</code>, I bundle the debit (<code>SET balance = balance - :amount</code>) and credit (<code>SET balance = balance + :amount</code>) into a single <code>TransactWriteCommand</code>. Both operations commit atomically or both roll back.</li>
+        <li><strong>Optimistic Concurrency Guards:</strong> On the debit item, I enforce <code>ConditionExpression: "balance >= :amount AND #status = :openStatus AND currency = :currency"</code>.</li>
+        <li><strong>Race Condition Handling:</strong> If two transfers attempt to debit the same account concurrently, DynamoDB aborts the transaction with <code>TransactionCanceledException</code>. My handler catches this and returns a clean <code>409 Conflict</code>.</li>
+        <li><strong>Resilience Fallback:</strong> For local development environments (like <code>dynalite</code>) that do not support <code>TransactWriteItems</code>, the repository includes a resilient two-phase conditional update with compensating rollback.</li>
       </ul>
     </div>
   </div>
 
   <div class="card">
-    <div class="q-title"><span class="number">Q5</span> How did you test your implementation?</div>
+    <div class="q-title"><span class="number">Q5</span> How did you handle input validation and financial precision?</div>
     <div class="answer-box">
       <div class="label">Answer Script</div>
       <ul>
-        <li>I implemented a dedicated unit test suite using Node's built-in <code>node:test</code> framework and <code>aws-sdk-client-mock</code>.</li>
-        <li>Mocking the DynamoDB Document Client allows the entire suite of <strong>37 tests across 11 suites</strong> to execute in under 300ms without needing live Docker infrastructure.</li>
-        <li>Tests verify happy paths (200/201), bad requests (400), not found (404), insufficient funds (409), GSI index query parameters, and transaction rollback handling.</li>
+        <li><strong>Dedicated Validator Layer (<code>src/validators/</code>):</strong> Created pure functions: <code>validateCreateCustomer</code>, <code>validateCreateAccount</code>, <code>validateDeposit</code>, <code>validateWithdraw</code>, and <code>validateTransfer</code>.</li>
+        <li><strong>Floating-Point Precision Guard:</strong> In IEEE-754 floating-point arithmetic, fractions like <code>0.1 + 0.2</code> yield <code>0.30000000000000004</code>. To prevent rounding vulnerabilities and exploits, validators strictly enforce that all monetary amounts must be finite numbers with at most <strong>2 decimal places</strong> (cents).</li>
+        <li><strong>Enum & Business Invariants:</strong> Enforce <code>CHECKING</code> / <code>SAVINGS</code>, <code>CAD</code> / <code>USD</code>, RFC 5322 regex for emails, and prevent self-transfers (<code>fromAccountId !== toAccountId</code>).</li>
       </ul>
     </div>
   </div>
+
+  <div class="card">
+    <div class="q-title"><span class="number">Q6</span> How did you test your implementation?</div>
+    <div class="answer-box">
+      <div class="label">Answer Script</div>
+      <ul>
+        <li>I built an automated unit test suite using Node's native <code>node:test</code> framework and <code>aws-sdk-client-mock</code>.</li>
+        <li>The suite contains <strong>79 tests across 26 test suites</strong> running in ~590ms without needing live Docker containers or external network calls.</li>
+        <li>Each layer is tested in isolation: 6 auth tests, 18 validator tests, 10 service tests, 8 repository tests, and 37 controller tests.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
 
   <h2>3. Live Demo Quick Reference</h2>
   <div class="card">
@@ -279,34 +298,40 @@ const html = `<!DOCTYPE html>
         <tr>
           <td><strong>1. Launch Server</strong></td>
           <td><code>npm run dev</code></td>
-          <td>1-command startup: auto-cleans ports, starts DynamoDB Local, seeds data, starts serverless.</td>
+          <td>1-command startup: auto-cleans ports, starts DynamoDB Local, seeds tables, starts serverless.</td>
         </tr>
         <tr>
           <td><strong>2. Open Swagger UI</strong></td>
           <td><code>http://localhost:3000/docs</code></td>
-          <td>Show interactive OpenAPI documentation with all schemas and try-it-out controls.</td>
+          <td>Show interactive OpenAPI docs with Bearer Auth security scheme and <code>POST /auth/token</code>.</td>
         </tr>
         <tr>
           <td><strong>3. Run Tests</strong></td>
           <td><code>npm test</code></td>
-          <td>Show 37 tests passing with 0 failures in terminal.</td>
+          <td>Show all <strong>79 tests passing across 26 test suites</strong> in ~590ms.</td>
         </tr>
         <tr>
-          <td><strong>4. Point to Code</strong></td>
-          <td><code>src/handlers/</code></td>
-          <td>Highlight clean file separation, GSI query in <code>accounts.js</code>, and <code>TransactWriteCommand</code> in <code>transactions.js</code>.</td>
+          <td><strong>4. Point to Architecture</strong></td>
+          <td><code>src/</code> directory</td>
+          <td>Highlight clean 4-tier separation: <code>middlewares/</code>, <code>handlers/</code>, <code>validators/</code>, <code>services/</code>, <code>repositories/</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>5. Show Auth Guard</strong></td>
+          <td><code>curl http://localhost:3000/customers/cust_001</code></td>
+          <td>Returns <code>401 Unauthorized</code> without token. Add <code>-H "Authorization: Bearer &lt;token&gt;"</code> to show <code>200 OK</code>.</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <h2>4. Technical Buzzword & Concept Summary</h2>
+  <h2>4. Technical Buzzword & Architectural Concept Summary</h2>
   <div class="callout">
     <strong>Key concepts to mention during the interview:</strong><br />
-    &bull; <strong>GSI vs. Scan:</strong> Explain that GSI provides $O(1)$ partition isolation, whereas Scan is an $O(N)$ anti-pattern.<br />
+    &bull; <strong>Clean Architecture & Single Responsibility:</strong> Handlers handle HTTP; Validators validate input; Services execute business logic; Repositories access DynamoDB.<br />
+    &bull; <strong>JWT Bearer Authentication:</strong> Stateless token verification via reusable <code>withAuth</code> middleware.<br />
+    &bull; <strong>GSI vs. Table Scan:</strong> Explain that GSI provides $O(1)$ partition isolation, whereas Scan is an $O(N)$ linear-cost anti-pattern.<br />
     &bull; <strong>DynamoDB ACID Transactions:</strong> Emphasize all-or-nothing atomicity via <code>TransactWriteItems</code>.<br />
-    &bull; <strong>Optimistic Concurrency Control:</strong> Use of <code>ConditionExpression</code> to prevent race conditions without table locks.<br />
-    &bull; <strong>Idempotency:</strong> Mention <code>ClientRequestToken</code> for safe client retries in production distributed systems.<br />
+    &bull; <strong>Optimistic Concurrency Control:</strong> Use of <code>ConditionExpression</code> on balances to prevent race conditions and overdrafts.<br />
     &bull; <strong>Financial Precision:</strong> Validation of 2-decimal place limits to prevent IEEE-754 precision issues.
   </div>
 

@@ -11,6 +11,7 @@ provider:
     DYNAMODB_ENDPOINT: ${env:DYNAMODB_ENDPOINT, 'http://localhost:8000'}
     CUSTOMERS_TABLE: ${env:CUSTOMERS_TABLE, 'Customers'}
     ACCOUNTS_TABLE: ${env:ACCOUNTS_TABLE, 'Accounts'}
+    JWT_SECRET: ${env:JWT_SECRET, 'banking-api-assessment-super-secret-key-2026'}
   # IAM is unused for local DynamoDB; kept for realism if you later deploy to AWS
   iam:
     role:
@@ -50,6 +51,13 @@ functions:
       - http:
           path: openapi.yaml
           method: get
+
+  createToken:
+    handler: src/handlers/auth.createToken
+    events:
+      - http:
+          path: auth/token
+          method: post
 
   createCustomer:
     handler: src/handlers/customers.create

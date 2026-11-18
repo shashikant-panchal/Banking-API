@@ -12,79 +12,151 @@
   </style>
 </head>
 <body>
-  <h1>🧪 Banking API Test Suite — 37 / 37 Tests Passing</h1>
-  <div class="status-banner">✔ PASS: All 37 automated tests across 11 test suites completed successfully with 0 failures!</div>
+  <h1>🧪 Banking API Test Suite — 79 / 79 Tests Passing</h1>
+  <div class="status-banner">✔ PASS: All 79 automated tests across 26 test suites (Handlers, Middleware, Validators, Services, Repositories) completed with 0 failures!</div>
   <div class="terminal">
 > nodejs-api-db-assessment@1.0.0 test
 > node --test test/**/*.test.js
 
 ▶ Accounts Handler
+  ▶ Authentication Guard
+    <span class="check">✔</span> returns 401 when Authorization header is missing on create (1.186ms)
+    <span class="check">✔</span> returns 401 when Authorization header is missing on list (0.3897ms)
+    <span class="check">✔</span> returns 401 when Authorization header is missing on get (0.3523ms)
+  <span class="check">✔</span> Authentication Guard (2.7312ms)
   ▶ POST /customers/{customerId}/accounts (create)
-    <span class="check">✔</span> successfully creates an account with default initialBalance of 0 (5.9031ms)
-    <span class="check">✔</span> successfully creates an account with custom initialBalance (0.9545ms)
-    <span class="check">✔</span> returns 404 when customer does not exist (0.6467ms)
-    <span class="check">✔</span> returns 400 for invalid account type (0.3559ms)
-    <span class="check">✔</span> returns 400 for invalid currency (0.4318ms)
-    <span class="check">✔</span> returns 400 for negative initialBalance (0.4117ms)
-    <span class="check">✔</span> returns 400 for initialBalance with more than 2 decimal places (0.3025ms)
-  <span class="check">✔</span> POST /customers/{customerId}/accounts (create) (10.0975ms)
+    <span class="check">✔</span> successfully creates an account with default initialBalance of 0 (8.0614ms)
+    <span class="check">✔</span> successfully creates an account with custom initialBalance (1.4489ms)
+    <span class="check">✔</span> returns 404 when customer does not exist (0.9725ms)
+    <span class="check">✔</span> returns 400 for invalid account type (0.7442ms)
+    <span class="check">✔</span> returns 400 for invalid currency (0.5681ms)
+    <span class="check">✔</span> returns 400 for negative initialBalance (0.5047ms)
+    <span class="check">✔</span> returns 400 for initialBalance with more than 2 decimal places (0.4529ms)
+  <span class="check">✔</span> POST /customers/{customerId}/accounts (create) (13.3288ms)
   ▶ GET /customers/{customerId}/accounts (list)
-    <span class="check">✔</span> successfully queries accounts using CustomerIdIndex GSI (1.6305ms)
-    <span class="check">✔</span> returns empty items array when customer has no accounts (0.7962ms)
-    <span class="check">✔</span> returns 404 if customer does not exist when listing accounts (0.4681ms)
-  <span class="check">✔</span> GET /customers/{customerId}/accounts (list) (3.1253ms)
+    <span class="check">✔</span> successfully queries accounts using CustomerIdIndex GSI (1.9642ms)
+    <span class="check">✔</span> returns empty items array when customer has no accounts (1.2208ms)
+    <span class="check">✔</span> returns 404 if customer does not exist when listing accounts (0.7953ms)
+  <span class="check">✔</span> GET /customers/{customerId}/accounts (list) (4.1786ms)
   ▶ GET /accounts/{accountId} (get)
-    <span class="check">✔</span> successfully retrieves an account including its balance (0.4505ms)
-    <span class="check">✔</span> returns 404 when account is not found (0.3053ms)
-    <span class="check">✔</span> returns 400 when accountId path param is missing (0.1781ms)
-  <span class="check">✔</span> GET /accounts/{accountId} (get) (1.059ms)
-<span class="check">✔</span> Accounts Handler (14.7731ms)
+    <span class="check">✔</span> successfully retrieves an account including its balance (0.7217ms)
+    <span class="check">✔</span> returns 404 when account is not found (0.6127ms)
+    <span class="check">✔</span> returns 400 when accountId path param is missing (0.4159ms)
+  <span class="check">✔</span> GET /accounts/{accountId} (get) (1.9297ms)
+<span class="check">✔</span> Accounts Handler (22.7899ms)
+▶ Auth Middleware
+  <span class="check">✔</span> generates a valid JWT token that can be authenticated (6.7024ms)
+  <span class="check">✔</span> handles lowercase authorization header (1.6726ms)
+  <span class="check">✔</span> returns 401 if headers are missing (0.3176ms)
+  <span class="check">✔</span> returns 401 if Authorization header is missing (0.2617ms)
+  <span class="check">✔</span> returns 401 if format is not Bearer token (0.1984ms)
+  <span class="check">✔</span> returns 401 if token is invalid or tampered (0.2328ms)
+  <span class="check">✔</span> withAuth decorator blocks unauthenticated requests and executes authenticated ones (0.7654ms)
+<span class="check">✔</span> Auth Middleware (11.9472ms)
 ▶ Customers Handler
+  ▶ Authentication Guard
+    <span class="check">✔</span> returns 401 when Authorization header is missing (1.1148ms)
+    <span class="check">✔</span> returns 401 on GET when token is missing (0.4312ms)
+  <span class="check">✔</span> Authentication Guard (2.4634ms)
   ▶ POST /customers (create)
-    <span class="check">✔</span> successfully creates a customer with valid input (6.0899ms)
-    <span class="check">✔</span> returns 400 if fullName is missing (0.4173ms)
-    <span class="check">✔</span> returns 400 if fullName is empty string (0.2915ms)
-    <span class="check">✔</span> returns 400 if email is missing or invalid (0.4842ms)
-    <span class="check">✔</span> returns 400 if body is missing (0.3955ms)
-    <span class="check">✔</span> returns 400 if body is not valid JSON (0.5646ms)
-  <span class="check">✔</span> POST /customers (create) (9.2646ms)
+    <span class="check">✔</span> successfully creates a customer with valid input (6.7922ms)
+    <span class="check">✔</span> returns 400 if fullName is missing (0.7585ms)
+    <span class="check">✔</span> returns 400 if fullName is empty string (0.6612ms)
+    <span class="check">✔</span> returns 400 if email is missing or invalid (0.4825ms)
+    <span class="check">✔</span> returns 400 if body is missing (0.477ms)
+    <span class="check">✔</span> returns 400 if body is not valid JSON (0.4691ms)
+  <span class="check">✔</span> POST /customers (create) (10.1605ms)
   ▶ GET /customers/{customerId} (get)
-    <span class="check">✔</span> successfully retrieves an existing customer (1.824ms)
-    <span class="check">✔</span> returns 404 when customer is not found (0.5907ms)
-    <span class="check">✔</span> returns 400 when customerId path param is missing (0.2866ms)
-  <span class="check">✔</span> GET /customers/{customerId} (get) (3.0561ms)
-<span class="check">✔</span> Customers Handler (12.7569ms)
+    <span class="check">✔</span> successfully retrieves an existing customer (1.7224ms)
+    <span class="check">✔</span> returns 404 when customer is not found (0.9014ms)
+    <span class="check">✔</span> returns 400 when customerId path param is missing (0.4348ms)
+  <span class="check">✔</span> GET /customers/{customerId} (get) (3.2616ms)
+<span class="check">✔</span> Customers Handler (16.4788ms)
+▶ Repository Layer
+  ▶ CustomerRepository
+    <span class="check">✔</span> findById calls GetCommand with customerId (3.0765ms)
+    <span class="check">✔</span> create calls PutCommand with item (2.2375ms)
+  <span class="check">✔</span> CustomerRepository (6.1784ms)
+  ▶ AccountRepository
+    <span class="check">✔</span> findByCustomerId queries CustomerIdIndex GSI (0.9024ms)
+    <span class="check">✔</span> updateBalance issues UpdateCommand with correct expressions (0.7754ms)
+    <span class="check">✔</span> executeTransfer issues TransactWriteCommand with 2 items (1.326ms)
+  <span class="check">✔</span> AccountRepository (3.3142ms)
+<span class="check">✔</span> Repository Layer (10.0003ms)
+▶ Service Layer
+  ▶ CustomerService
+    <span class="check">✔</span> createCustomer builds customer and calls repo create (6.4724ms)
+    <span class="check">✔</span> getCustomer throws 404 if customer not found (1.0365ms)
+  <span class="check">✔</span> CustomerService (8.7315ms)
+  ▶ AccountService
+    <span class="check">✔</span> createAccount throws 404 if parent customer does not exist (0.5628ms)
+    <span class="check">✔</span> createAccount creates account if customer exists (0.3815ms)
+    <span class="check">✔</span> listAccounts throws 404 if customer does not exist (0.4042ms)
+  <span class="check">✔</span> AccountService (1.7711ms)
+  ▶ TransactionService
+    <span class="check">✔</span> deposit throws 404 if account not found (0.5866ms)
+    <span class="check">✔</span> deposit throws 400 if currency mismatch (0.4352ms)
+    <span class="check">✔</span> withdraw throws 409 on insufficient funds (0.4094ms)
+    <span class="check">✔</span> transfer throws 409 if source account has insufficient funds (0.4651ms)
+  <span class="check">✔</span> TransactionService (2.4718ms)
+<span class="check">✔</span> Service Layer (13.6965ms)
 ▶ Transactions Handler
+  ▶ Authentication Guard
+    <span class="check">✔</span> returns 401 on deposit without token (1.5113ms)
+    <span class="check">✔</span> returns 401 on withdrawal without token (0.6014ms)
+    <span class="check">✔</span> returns 401 on transfer without token (0.5262ms)
+  <span class="check">✔</span> Authentication Guard (3.8017ms)
   ▶ POST /accounts/{accountId}/deposits (deposit)
-    <span class="check">✔</span> successfully deposits into account and returns updated account (5.3271ms)
-    <span class="check">✔</span> returns 404 if account not found (0.6465ms)
-    <span class="check">✔</span> returns 400 if amount <= 0 (0.3437ms)
-    <span class="check">✔</span> returns 400 if currency does not match account currency (0.62ms)
-    <span class="check">✔</span> returns 400 if account is not OPEN (0.7619ms)
-  <span class="check">✔</span> POST /accounts/{accountId}/deposits (deposit) (8.6128ms)
+    <span class="check">✔</span> successfully deposits into account and returns updated account (8.0652ms)
+    <span class="check">✔</span> returns 404 if account not found (1.613ms)
+    <span class="check">✔</span> returns 400 if amount <= 0 (0.7216ms)
+    <span class="check">✔</span> returns 400 if currency does not match account currency (1.3997ms)
+    <span class="check">✔</span> returns 400 if account is not OPEN (1.3416ms)
+  <span class="check">✔</span> POST /accounts/{accountId}/deposits (deposit) (13.815ms)
   ▶ POST /accounts/{accountId}/withdrawals (withdraw)
-    <span class="check">✔</span> successfully withdraws and returns updated account (1.2453ms)
-    <span class="check">✔</span> returns 409 on insufficient funds (0.7553ms)
-    <span class="check">✔</span> returns 409 when ConditionalCheckFailedException is thrown (race condition) (1.3817ms)
-    <span class="check">✔</span> returns 404 if account not found (0.894ms)
-  <span class="check">✔</span> POST /accounts/{accountId}/withdrawals (withdraw) (4.7303ms)
+    <span class="check">✔</span> successfully withdraws and returns updated account (1.4705ms)
+    <span class="check">✔</span> returns 409 on insufficient funds (1.3407ms)
+    <span class="check">✔</span> returns 409 when ConditionalCheckFailedException is thrown (race condition) (1.7854ms)
+    <span class="check">✔</span> returns 404 if account not found (1.0973ms)
+  <span class="check">✔</span> POST /accounts/{accountId}/withdrawals (withdraw) (6.1856ms)
   ▶ POST /transfers (transfer)
-    <span class="check">✔</span> successfully transfers funds atomically between accounts (2.6176ms)
-    <span class="check">✔</span> returns 400 when transferring to the same account (0.4164ms)
-    <span class="check">✔</span> returns 404 when source account not found (0.9122ms)
-    <span class="check">✔</span> returns 409 when source account has insufficient funds (0.8735ms)
-    <span class="check">✔</span> returns 400 when currencies do not match (0.8211ms)
-    <span class="check">✔</span> returns 409 when TransactionCanceledException occurs (concurrency collision) (0.9935ms)
-  <span class="check">✔</span> POST /transfers (transfer) (7.0593ms)
-<span class="check">✔</span> Transactions Handler (20.9427ms)
-ℹ tests 37
-ℹ suites 11
-ℹ pass 37
+    <span class="check">✔</span> successfully transfers funds atomically between accounts (3.353ms)
+    <span class="check">✔</span> returns 400 when transferring to the same account (0.6634ms)
+    <span class="check">✔</span> returns 404 when source account not found (1.3668ms)
+    <span class="check">✔</span> returns 409 when source account has insufficient funds (1.2993ms)
+    <span class="check">✔</span> returns 400 when currencies do not match (1.1617ms)
+    <span class="check">✔</span> returns 409 when TransactionCanceledException occurs (concurrency collision) (1.4181ms)
+  <span class="check">✔</span> POST /transfers (transfer) (9.7912ms)
+<span class="check">✔</span> Transactions Handler (34.6061ms)
+▶ Validator Layer
+  ▶ Customer Validators
+    <span class="check">✔</span> validateCreateCustomer validates valid payload (0.8806ms)
+    <span class="check">✔</span> validateCreateCustomer rejects empty fullName (0.1944ms)
+    <span class="check">✔</span> validateCreateCustomer rejects invalid email (0.1728ms)
+    <span class="check">✔</span> validateCustomerId extracts valid customerId (0.1972ms)
+    <span class="check">✔</span> validateCustomerId rejects missing customerId (0.2427ms)
+  <span class="check">✔</span> Customer Validators (2.7897ms)
+  ▶ Account Validators
+    <span class="check">✔</span> validateCreateAccount validates valid checking account (0.5819ms)
+    <span class="check">✔</span> validateCreateAccount rejects invalid account type (0.2821ms)
+    <span class="check">✔</span> validateCreateAccount rejects invalid currency (0.239ms)
+    <span class="check">✔</span> validateCreateAccount rejects fractional cents (>2 decimals) (0.2951ms)
+  <span class="check">✔</span> Account Validators (1.9234ms)
+  ▶ Transaction Validators
+    <span class="check">✔</span> validateDeposit validates valid deposit (0.5694ms)
+    <span class="check">✔</span> validateDeposit rejects negative amount (0.202ms)
+    <span class="check">✔</span> validateTransfer validates valid transfer between two accounts (0.344ms)
+    <span class="check">✔</span> validateTransfer rejects self-transfer (1.2399ms)
+  <span class="check">✔</span> Transaction Validators (2.6851ms)
+<span class="check">✔</span> Validator Layer (8.1425ms)
+ℹ tests 79
+ℹ suites 26
+ℹ pass 79
 ℹ fail 0
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 263.3997
+ℹ duration_ms 445.2419
 </div>
 </body>
 </html>

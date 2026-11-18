@@ -3,16 +3,35 @@
 const { test, describe, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 const { mockClient } = require("aws-sdk-client-mock");
-const { DynamoDBDocumentClient, GetCommand, PutCommand } = require("@aws-sdk/lib-dynamodb");
+const { GetCommand, PutCommand } = require("@aws-sdk/lib-dynamodb");
 
 const { docClient, TABLES } = require("../src/lib/dynamodb");
 const customersHandler = require("../src/handlers/customers");
+const { generateToken } = require("../src/middlewares/auth.middleware");
 
 const ddbMock = mockClient(docClient);
+const validToken = generateToken({ sub: "test_user", role: "admin" });
+const authHeaders = { Authorization: `Bearer ${validToken}` };
 
 describe("Customers Handler", () => {
   beforeEach(() => {
     ddbMock.reset();
+  });
+
+  describe("Authentication Guard", () => {
+    test("returns 401 when Authorization header is missing", async () => {
+      const response = await customersHandler.create({});
+      assert.equal(response.statusCode, 401);
+      const body = JSON.parse(response.body);
+      assert.equal(body.error, "UNAUTHORIZED");
+    });
+
+    test("returns 401 on GET when token is missing", async () => {
+      const response = await customersHandler.get({ pathParameters: { customerId: "cust_001" } });
+      assert.equal(response.statusCode, 401);
+      const body = JSON.parse(response.body);
+      assert.equal(body.error, "UNAUTHORIZED");
+    });
   });
 
   describe("POST /customers (create)", () => {
@@ -20,6 +39,7 @@ describe("Customers Handler", () => {
       ddbMock.on(PutCommand).resolves({});
 
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fullName: "Grace Hopper",
           email: "grace@example.com",
@@ -45,6 +65,7 @@ describe("Customers Handler", () => {
 
     test("returns 400 if fullName is missing", async () => {
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           email: "grace@example.com",
         }),
@@ -60,6 +81,7 @@ describe("Customers Handler", () => {
 
     test("returns 400 if fullName is empty string", async () => {
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fullName: "   ",
           email: "grace@example.com",
@@ -75,6 +97,7 @@ describe("Customers Handler", () => {
 
     test("returns 400 if email is missing or invalid", async () => {
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fullName: "Grace Hopper",
           email: "not-an-email",
@@ -90,7 +113,7 @@ describe("Customers Handler", () => {
     });
 
     test("returns 400 if body is missing", async () => {
-      const event = {};
+      const event = { headers: authHeaders };
       const response = await customersHandler.create(event);
       assert.equal(response.statusCode, 400);
 
@@ -99,7 +122,7 @@ describe("Customers Handler", () => {
     });
 
     test("returns 400 if body is not valid JSON", async () => {
-      const event = { body: "not-json" };
+      const event = { headers: authHeaders, body: "not-json" };
       const response = await customersHandler.create(event);
       assert.equal(response.statusCode, 400);
 
@@ -126,6 +149,7 @@ describe("Customers Handler", () => {
       });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
       };
 
@@ -140,6 +164,7 @@ describe("Customers Handler", () => {
       ddbMock.on(GetCommand).resolves({});
 
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_999" },
       };
 
@@ -151,7 +176,7 @@ describe("Customers Handler", () => {
     });
 
     test("returns 400 when customerId path param is missing", async () => {
-      const event = { pathParameters: {} };
+      const event = { headers: authHeaders, pathParameters: {} };
       const response = await customersHandler.get(event);
       assert.equal(response.statusCode, 400);
 
@@ -160,4 +185,3 @@ describe("Customers Handler", () => {
     });
   });
 });
-

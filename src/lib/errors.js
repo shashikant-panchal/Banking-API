@@ -13,6 +13,10 @@ function badRequest(message) {
   return new AppError(400, "BAD_REQUEST", message);
 }
 
+function unauthorized(message = "Unauthorized: Missing or invalid token") {
+  return new AppError(401, "UNAUTHORIZED", message);
+}
+
 function notFound(message) {
   return new AppError(404, "NOT_FOUND", message);
 }
@@ -24,6 +28,7 @@ function conflict(message) {
 module.exports = {
   AppError,
   badRequest,
+  unauthorized,
   notFound,
   conflict,
 };

@@ -14,11 +14,52 @@ servers:
     description: Local serverless-offline
 
 tags:
+  - name: Authentication
   - name: Customers
   - name: Accounts
   - name: Transactions
 
+security:
+  - bearerAuth: []
+
 paths:
+  /auth/token:
+    post:
+      tags: [Authentication]
+      summary: Generate a JWT bearer token
+      operationId: createToken
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: admin
+                role:
+                  type: string
+                  example: admin
+      responses:
+        "200":
+          description: JWT token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  tokenType:
+                    type: string
+                    example: Bearer
+                  expiresIn:
+                    type: string
+                    example: 24h
+        "400":
+          $ref: "#/components/responses/BadRequest"
   /customers:
     post:
       tags: [Customers]
@@ -226,7 +267,20 @@ components:
         type: string
       example: acct_001
 
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Enter your JWT token obtained from POST /auth/token"
+
   responses:
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
     BadRequest:
       description: Invalid request
       content:

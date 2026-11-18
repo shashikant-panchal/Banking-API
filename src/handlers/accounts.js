@@ -1,185 +1,92 @@
 "use strict";
 
-const { v4: uuidv4 } = require("uuid");
-const { GetCommand, PutCommand, QueryCommand } = require("@aws-sdk/lib-dynamodb");
-const { docClient, TABLES } = require("../lib/dynamodb");
+const { ok, created, json, serverError } = require("../lib/response");
+const { AppError } = require("../lib/errors");
+const { withAuth } = require("../middlewares/auth.middleware");
 const {
-  ok,
-  created,
-  badRequest,
-  notFound,
-  serverError,
-  parseJsonBody,
-} = require("../lib/response");
+  validateCreateAccount,
+  validateCustomerIdParam,
+  validateAccountIdParam,
+} = require("../validators/account.validator");
+const accountService = require("../services/account.service");
 
-const VALID_ACCOUNT_TYPES = new Set(["CHECKING", "SAVINGS"]);
-const VALID_CURRENCIES = new Set(["CAD", "USD"]);
+function handleError(err, defaultMessage = "Unexpected server error") {
+  if (err instanceof AppError) {
+    return json(err.statusCode, { error: err.error, message: err.message });
+  }
+  console.error("Account handler error:", err);
+  return serverError(`${defaultMessage}: ${err.message}`);
+}
 
 /**
  * POST /customers/{customerId}/accounts
  *
- * Creates an account for an existing customer.
- * - Validates customer exists (404 if not found)
- * - Validates type (CHECKING|SAVINGS) and currency (CAD|USD)
- * - initialBalance defaults to 0 and must be >= 0
- * - Persists to Accounts table (includes customerId for CustomerIdIndex GSI)
- * - Returns 201 with Account object
+ * Protected endpoint to create an account for a customer.
+ * - Authenticates via JWT middleware
+ * - Validates params & body via account.validator
+ * - Delegates business logic to account.service
  */
-async function create(event) {
-  const customerId = event.pathParameters?.customerId;
-  if (!customerId || customerId.trim().length === 0) {
-    return badRequest("customerId path parameter is required");
-  }
-
-  const parsed = parseJsonBody(event);
-  if (!parsed.ok) {
-    return parsed.response;
-  }
-
-  const { type, currency, initialBalance } = parsed.data;
-
-  if (!type || !VALID_ACCOUNT_TYPES.has(type)) {
-    return badRequest("type must be CHECKING or SAVINGS");
-  }
-
-  if (!currency || !VALID_CURRENCIES.has(currency)) {
-    return badRequest("currency must be CAD or USD");
-  }
-
-  let balance = 0;
-  if (initialBalance !== undefined) {
-    if (
-      typeof initialBalance !== "number" ||
-      !Number.isFinite(initialBalance) ||
-      initialBalance < 0
-    ) {
-      return badRequest("initialBalance must be a non-negative number");
-    }
-    if (Number(initialBalance.toFixed(2)) !== initialBalance) {
-      return badRequest("initialBalance cannot have more than 2 decimal places");
-    }
-    balance = initialBalance;
+const create = withAuth(async (event) => {
+  const validation = validateCreateAccount(event);
+  if (!validation.valid) {
+    return validation.response;
   }
 
   try {
-    // Verify customer exists before creating account
-    const customerResult = await docClient.send(
-      new GetCommand({
-        TableName: TABLES.customers,
-        Key: { customerId },
-      })
-    );
-
-    if (!customerResult.Item) {
-      return notFound(`Customer not found: ${customerId}`);
-    }
-
-    const accountId = `acct_${uuidv4()}`;
-    const now = new Date().toISOString();
-
-    const account = {
-      accountId,
-      customerId,
-      type,
-      currency,
-      balance,
-      status: "OPEN",
-      createdAt: now,
-    };
-
-    await docClient.send(
-      new PutCommand({
-        TableName: TABLES.accounts,
-        Item: account,
-      })
-    );
-
+    const account = await accountService.createAccount(validation.data);
     return created(account);
   } catch (err) {
-    console.error(`Error creating account for customer ${customerId}:`, err);
-    return serverError(`Failed to create account: ${err.message}`);
+    return handleError(err, "Failed to create account");
   }
-}
+});
 
 /**
  * GET /customers/{customerId}/accounts
  *
- * Lists all accounts for a customer.
- * - Verifies customer exists (404 if not found)
- * - Queries the CustomerIdIndex GSI (avoids Scan)
- * - Returns 200: { items: Account[] }
+ * Protected endpoint to list accounts for a customer.
+ * - Authenticates via JWT middleware
+ * - Validates customerId path param
+ * - Queries GSI CustomerIdIndex via account.service
  */
-async function list(event) {
-  const customerId = event.pathParameters?.customerId;
-  if (!customerId || customerId.trim().length === 0) {
-    return badRequest("customerId path parameter is required");
+const list = withAuth(async (event) => {
+  const validation = validateCustomerIdParam(event);
+  if (!validation.valid) {
+    return validation.response;
   }
 
   try {
-    // Verify customer exists
-    const customerResult = await docClient.send(
-      new GetCommand({
-        TableName: TABLES.customers,
-        Key: { customerId },
-      })
-    );
-
-    if (!customerResult.Item) {
-      return notFound(`Customer not found: ${customerId}`);
-    }
-
-    const result = await docClient.send(
-      new QueryCommand({
-        TableName: TABLES.accounts,
-        IndexName: "CustomerIdIndex",
-        KeyConditionExpression: "customerId = :customerId",
-        ExpressionAttributeValues: {
-          ":customerId": customerId,
-        },
-      })
-    );
-
-    return ok({ items: result.Items || [] });
+    const result = await accountService.listAccounts(validation.customerId);
+    return ok(result);
   } catch (err) {
-    console.error(`Error listing accounts for customer ${customerId}:`, err);
-    return serverError(`Failed to list accounts: ${err.message}`);
+    return handleError(err, "Failed to list accounts");
   }
-}
+});
 
 /**
  * GET /accounts/{accountId}
  *
- * Gets a single account including balance.
- * - Reads accountId from event.pathParameters
- * - Returns 200 with Account, or 404 if missing
+ * Protected endpoint to retrieve an account with balance.
+ * - Authenticates via JWT middleware
+ * - Validates accountId path param
+ * - Retrieves account via account.service
  */
-async function get(event) {
-  const accountId = event.pathParameters?.accountId;
-  if (!accountId || accountId.trim().length === 0) {
-    return badRequest("accountId path parameter is required");
+const get = withAuth(async (event) => {
+  const validation = validateAccountIdParam(event);
+  if (!validation.valid) {
+    return validation.response;
   }
 
   try {
-    const result = await docClient.send(
-      new GetCommand({
-        TableName: TABLES.accounts,
-        Key: { accountId },
-      })
-    );
-
-    if (!result.Item) {
-      return notFound(`Account not found: ${accountId}`);
-    }
-
-    return ok(result.Item);
+    const account = await accountService.getAccount(validation.accountId);
+    return ok(account);
   } catch (err) {
-    console.error(`Error retrieving account ${accountId}:`, err);
-    return serverError(`Failed to get account: ${err.message}`);
+    return handleError(err, "Failed to retrieve account");
   }
-}
+});
 
 module.exports = {
   create,
   list,
   get,
+  handleError,
 };

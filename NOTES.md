@@ -4,7 +4,16 @@
 
 This repository implements the Banking REST API following the **API Gateway → Lambda → DynamoDB** pattern, conforming strictly to the provided [OpenAPI 3.0.3 specification](openapi/openapi.yaml).
 
-All core requirements and stretch goals have been implemented and validated with 37 automated tests:
+All core requirements and stretch goals have been implemented and validated with 79 automated tests across 26 test suites:
+- **Authentication**:
+  - `POST /auth/token` — Generate JWT Bearer Token for clients / Swagger testing
+  - `src/middlewares/auth.middleware.js` — JWT verification guard on every API endpoint (`401 Unauthorized`)
+- **Layered Enterprise Architecture**:
+  - **Handlers (`src/handlers/`)**: Pure controllers handling HTTP events and error responses.
+  - **Middleware (`src/middlewares/`)**: JWT authentication and user payload injection.
+  - **Validators (`src/validators/`)**: Standalone validation functions for request body and parameters.
+  - **Services (`src/services/`)**: Encapsulates business logic, domain rules, and transaction coordination.
+  - **Repositories (`src/repositories/`)**: Encapsulates all DynamoDB SDK v3 commands (`Get`, `Put`, `Query`, `Update`, `TransactWrite`).
 - **Core CRUD**:
   - `POST /customers` — Create customer (`201`)
   - `GET /customers/{customerId}` — Get customer by id (`200` / `404`)
@@ -21,9 +30,9 @@ All core requirements and stretch goals have been implemented and validated with
 ## Screenshots & Visual Proofs
 
 High-resolution screenshots are provided in the `screenshots/` directory:
-- **`screenshots/01_swagger_docs.png`**: Swagger UI documentation rendered from `openapi/openapi.yaml` on `http://localhost:3000/docs`.
-- **`screenshots/02_live_endpoints_verified.png`**: Complete end-to-end execution of all 9 operations against the live API on `http://localhost:3000` (Customer CRUD, Account listing via GSI Query, Deposits, Withdrawals, Atomic Transfers, and 409 Conflict overdraft guard).
-- **`screenshots/03_test_suite_passed.png`**: Terminal test runner output verifying all 37 unit tests passing across 11 test suites with 0 failures.
+- **`screenshots/01_swagger_docs.png`**: Swagger UI documentation rendered from `openapi/openapi.yaml` on `http://localhost:3000/docs` with JWT Bearer Authorize dialog.
+- **`screenshots/02_live_endpoints_verified.png`**: Complete end-to-end execution of all 10 operations against the live API on `http://localhost:3000` (including 401 unauthenticated guard, JWT token generation, Customer CRUD, GSI Account Query, Deposits, Withdrawals, and 409 Conflict overdraft guard).
+- **`screenshots/03_test_suite_passed.png`**: Terminal test runner output verifying all 79 unit tests passing across 26 test suites with 0 failures.
 
 ---
 

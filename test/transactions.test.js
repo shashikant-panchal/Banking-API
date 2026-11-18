@@ -11,12 +11,32 @@ const {
 
 const { docClient, TABLES } = require("../src/lib/dynamodb");
 const transactionsHandler = require("../src/handlers/transactions");
+const { generateToken } = require("../src/middlewares/auth.middleware");
 
 const ddbMock = mockClient(docClient);
+const validToken = generateToken({ sub: "test_user", role: "admin" });
+const authHeaders = { Authorization: `Bearer ${validToken}` };
 
 describe("Transactions Handler", () => {
   beforeEach(() => {
     ddbMock.reset();
+  });
+
+  describe("Authentication Guard", () => {
+    test("returns 401 on deposit without token", async () => {
+      const res = await transactionsHandler.deposit({});
+      assert.equal(res.statusCode, 401);
+    });
+
+    test("returns 401 on withdrawal without token", async () => {
+      const res = await transactionsHandler.withdraw({});
+      assert.equal(res.statusCode, 401);
+    });
+
+    test("returns 401 on transfer without token", async () => {
+      const res = await transactionsHandler.transfer({});
+      assert.equal(res.statusCode, 401);
+    });
   });
 
   describe("POST /accounts/{accountId}/deposits (deposit)", () => {
@@ -41,6 +61,7 @@ describe("Transactions Handler", () => {
       ddbMock.on(UpdateCommand).resolves({ Attributes: updated });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_001" },
         body: JSON.stringify({ amount: 50.0, currency: "CAD" }),
       };
@@ -60,6 +81,7 @@ describe("Transactions Handler", () => {
       ddbMock.on(GetCommand).resolves({});
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_999" },
         body: JSON.stringify({ amount: 50.0, currency: "CAD" }),
       };
@@ -73,6 +95,7 @@ describe("Transactions Handler", () => {
 
     test("returns 400 if amount <= 0", async () => {
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_001" },
         body: JSON.stringify({ amount: -10, currency: "CAD" }),
       };
@@ -100,6 +123,7 @@ describe("Transactions Handler", () => {
         });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_001" },
         body: JSON.stringify({ amount: 50, currency: "USD" }),
       };
@@ -128,6 +152,7 @@ describe("Transactions Handler", () => {
         });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_001" },
         body: JSON.stringify({ amount: 50, currency: "CAD" }),
       };
@@ -161,6 +186,7 @@ describe("Transactions Handler", () => {
       ddbMock.on(UpdateCommand).resolves({ Attributes: updated });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_001" },
         body: JSON.stringify({ amount: 25.0, currency: "CAD" }),
       };
@@ -192,6 +218,7 @@ describe("Transactions Handler", () => {
         });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_001" },
         body: JSON.stringify({ amount: 50.0, currency: "CAD" }),
       };
@@ -224,6 +251,7 @@ describe("Transactions Handler", () => {
       ddbMock.on(UpdateCommand).rejects(err);
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_001" },
         body: JSON.stringify({ amount: 50.0, currency: "CAD" }),
       };
@@ -239,6 +267,7 @@ describe("Transactions Handler", () => {
       ddbMock.on(GetCommand).resolves({});
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_999" },
         body: JSON.stringify({ amount: 25.0, currency: "CAD" }),
       };
@@ -271,20 +300,20 @@ describe("Transactions Handler", () => {
         status: "OPEN",
       };
 
-      // Mock initial read
       ddbMock
         .on(GetCommand, { TableName: TABLES.accounts, Key: { accountId: "acct_001" } })
         .resolvesOnce({ Item: fromAcct })
-        .resolvesOnce({ Item: { ...fromAcct, balance: 150.0 } }); // Post-tx read
+        .resolvesOnce({ Item: { ...fromAcct, balance: 150.0 } });
 
       ddbMock
         .on(GetCommand, { TableName: TABLES.accounts, Key: { accountId: "acct_002" } })
         .resolvesOnce({ Item: toAcct })
-        .resolvesOnce({ Item: { ...toAcct, balance: 100.0 } }); // Post-tx read
+        .resolvesOnce({ Item: { ...toAcct, balance: 100.0 } });
 
       ddbMock.on(TransactWriteCommand).resolves({});
 
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fromAccountId: "acct_001",
           toAccountId: "acct_002",
@@ -300,7 +329,6 @@ describe("Transactions Handler", () => {
       assert.equal(body.fromAccount.balance, 150.0);
       assert.equal(body.toAccount.balance, 100.0);
 
-      // Verify TransactWriteCommand was called with two updates
       const txCalls = ddbMock.commandCalls(TransactWriteCommand);
       assert.equal(txCalls.length, 1);
       const items = txCalls[0].args[0].input.TransactItems;
@@ -311,6 +339,7 @@ describe("Transactions Handler", () => {
 
     test("returns 400 when transferring to the same account", async () => {
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fromAccountId: "acct_001",
           toAccountId: "acct_001",
@@ -336,6 +365,7 @@ describe("Transactions Handler", () => {
         .resolves({ Item: { accountId: "acct_002", status: "OPEN", currency: "CAD" } });
 
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fromAccountId: "acct_001",
           toAccountId: "acct_002",
@@ -374,6 +404,7 @@ describe("Transactions Handler", () => {
         .resolves({ Item: toAcct });
 
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fromAccountId: "acct_001",
           toAccountId: "acct_002",
@@ -413,6 +444,7 @@ describe("Transactions Handler", () => {
         .resolves({ Item: toAcct });
 
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fromAccountId: "acct_001",
           toAccountId: "acct_002",
@@ -456,6 +488,7 @@ describe("Transactions Handler", () => {
       ddbMock.on(TransactWriteCommand).rejects(txError);
 
       const event = {
+        headers: authHeaders,
         body: JSON.stringify({
           fromAccountId: "acct_001",
           toAccountId: "acct_002",
@@ -472,4 +505,3 @@ describe("Transactions Handler", () => {
     });
   });
 });
-

@@ -1,231 +1,213 @@
-# Banking API Assessment — Complete Code Changes & Architecture Guide
+# Banking API Assessment — Complete Code Changes & Layered Architecture Guide
 
-This document provides a comprehensive audit of all files created, modified, and enhanced across the entire project. Use this guide to understand every detail of the codebase and explain your work clearly in technical interviews.
+This document provides a comprehensive technical audit of all files created, modified, and enhanced across the entire project. It documents the evolution from initial assessment stubs to a production-grade, 4-tier Clean Architecture with JWT authentication as requested in recruiter feedback.
 
 ---
 
-## 1. Master File Change Matrix
+## 1. Recruiter Feedback & Architectural Response
 
-| File Path | Status | Type | Purpose & Summary of Work |
+### Recruiter Feedback Received:
+> *"Okay. You done good, okay? Thank you. But just you are not mention the business logic on your handler. Why you are not separated, like the services, account service, transaction service, or customer service. And also you have missed it, like make repository, mention all your queries. Like you have mentioned already your DynamoDB commands, get commands, put command, delete command, and also queries. I think it will be help with you, right? Yeah. And also I think you missed the validation. Already you are validated in your handler, right? Yes. You make it a separate folder, or separate file for validation, and mention the functions, and export the function. After that you have called the operations to validate the request body, parameters. I think you got my point, right? Yes. But you, right now, just your explanation is okay, understand. Add the authentication with jwt middleware in every api"*
+
+### Architectural Transformation:
+To address this feedback comprehensively, the entire codebase was refactored into a **4-Tier Clean Architecture** adhering to the **Single Responsibility Principle (SRP)** and **Separation of Concerns (SoC)**:
+
+```
+                      ┌────────────────────────────────────────┐
+                      │             HTTP Request               │
+                      └──────────────────┬─────────────────────┘
+                                         │
+                                         ▼
+                      ┌────────────────────────────────────────┐
+                      │       JWT Authentication Middleware    │
+                      │      (src/middlewares/auth.middleware)│
+                      │    - Verifies Bearer JWT token          │
+                      │    - Attaches decoded user to event     │
+                      │    - Rejects with 401 Unauthorized     │
+                      └──────────────────┬─────────────────────┘
+                                         │
+                                         ▼
+                      ┌────────────────────────────────────────┐
+                      │       Controller / Handler Layer       │
+                      │          (src/handlers/*.js)           │
+                      │    - HTTP envelope parsing             │
+                      │    - Coordinates Validator & Service   │
+                      │    - Maps results to HTTP 200/201/etc. │
+                      └─────────┬────────────────────┬─────────┘
+                                │                    │
+                1. Validate     │                    │  2. Delegate
+                                ▼                    ▼
+        ┌─────────────────────────────┐   ┌─────────────────────────────┐
+        │       Validator Layer       │   │        Service Layer        │
+        │     (src/validators/*.js)   │   │     (src/services/*.js)     │
+        │ - Pure validation functions │   │ - Domain business logic     │
+        │ - Parameter & body checks   │   │ - Account balance rules     │
+        │ - Regex, enums, 2-decimals  │   │ - Currency matching checks  │
+        │ - Throws 400 Bad Request    │   │ - Overdraft/conflict checks │
+        └─────────────────────────────┘   └──────────────┬──────────────┘
+                                                         │
+                                                         │ 3. Data Access
+                                                         ▼
+                                          ┌─────────────────────────────┐
+                                          │      Repository Layer       │
+                                          │   (src/repositories/*.js)   │
+                                          │ - Encapsulates all DynamoDB │
+                                          │ - GetCommand, PutCommand    │
+                                          │ - UpdateCommand, Delete     │
+                                          │ - GSI QueryCommand          │
+                                          │ - TransactWriteCommand      │
+                                          └──────────────┬──────────────┘
+                                                         │
+                                                         ▼
+                                          ┌─────────────────────────────┐
+                                          │      Amazon DynamoDB        │
+                                          │     Customers & Accounts    │
+                                          └─────────────────────────────┘
+```
+
+---
+
+## 2. Master File Change Matrix
+
+| File Path | Status | Layer | Technical Purpose & Summary of Work |
 |---|---|---|---|
-| [`src/handlers/customers.js`](src/handlers/customers.js) | **Modified** | Business Logic | Replaced `501 Not Implemented` stubs. Implemented `createCustomer` (`POST /customers`) with validation + UUID generation, and `getCustomer` (`GET /customers/{id}`) with $O(1)$ point reads. |
-| [`src/handlers/accounts.js`](src/handlers/accounts.js) | **Modified** | Business Logic | Replaced `501 Not Implemented` stubs. Implemented `createAccount` (`POST`), `listAccounts` (`GET` via GSI `CustomerIdIndex` Query), and `getAccount` (`GET` including balance). |
-| [`src/handlers/transactions.js`](src/handlers/transactions.js) | **Modified** | Business Logic (Stretch) | Replaced `501 Not Implemented` stubs. Implemented atomic deposits (`POST /deposits`), withdrawals with overdraft guard (`POST /withdrawals`), and cross-account atomic transfers (`POST /transfers`) using DynamoDB ACID `TransactWriteItems`. |
-| [`src/lib/response.js`](src/lib/response.js) | **Modified** | Core Utility | Hardened `parseJsonBody` to support raw strings, base64 encoding, and pre-parsed event objects. Enforced `{ error, message }` error schemas conforming to OpenAPI. |
-| [`serverless.yml`](serverless.yml) | **Modified** | Configuration | Added root path `/` to `docsUi` events so opening `http://localhost:3000` automatically loads Swagger UI without requiring `/docs`. |
-| [`package.json`](package.json) | **Modified** | Configuration | Added `"dev"`, `"test"`, `"db:local"`, and `"screenshots"` npm scripts. Added `aws-sdk-client-mock` and `dynalite` to `devDependencies`. |
-| [`README.md`](README.md) | **Modified** | Documentation | Added command reference table (`npm run dev`, `npm test`), links to `NOTES.md`, API specification, and screenshots. |
-| [`.env`](.env) | **Created** | Configuration | Configured environment variables for local DynamoDB connection on `http://localhost:8000`. |
-| [`test/customers.test.js`](test/customers.test.js) | **Created** | Automated Test | 9 unit tests for customer creation and retrieval, covering happy paths, missing fields, malformed emails, and 404s. |
-| [`test/accounts.test.js`](test/accounts.test.js) | **Created** | Automated Test | 13 unit tests for account creation, initial balances, currency validation, 404s, and GSI `CustomerIdIndex` queries. |
-| [`test/transactions.test.js`](test/transactions.test.js) | **Created** | Automated Test | 15 unit tests for deposits, withdrawals, atomic transfers, overdraft guards (`409`), currency mismatches, and concurrency race conditions. |
-| [`scripts/dev.js`](scripts/dev.js) | **Created** | Developer Experience | 1-command startup script: auto-cleans stale ports (8000/3000/3002), auto-copies `.env`, starts local DynamoDB, seeds tables, and starts serverless-offline. |
-| [`scripts/start-local-db.js`](scripts/start-local-db.js) | **Created** | Infrastructure | Pure Node.js in-memory DynamoDB Local server using `dynalite`, enabling local development without needing Docker Desktop. |
-| [`scripts/create-tables.js`](scripts/create-tables.js) | **Modified** | Database Migration | Hardened table recreation logic with backoff delays and `ResourceInUseException` resilience. |
-| [`scripts/capture-all-screenshots.js`](scripts/capture-all-screenshots.js) | **Created** | Verification / QA | Executes end-to-end HTTP requests for all 9 API operations against localhost:3000, runs tests, and captures high-res PNG screenshots. |
-| [`scripts/generate-interview-pdf.js`](scripts/generate-interview-pdf.js) | **Created** | Documentation | Automated script to render and print the interview preparation guide into PDF format via headless Chromium. |
-| [`NOTES.md`](NOTES.md) | **Created** | Technical Documentation | Comprehensive design document explaining DynamoDB access patterns, ACID transaction guarantees, partial failure handling, and demo curl commands. |
-| [`Banking_API_Interview_Guide.pdf`](Banking_API_Interview_Guide.pdf) | **Created** | Interview Prep | Professional PDF guide containing elevator pitches, core Q&A model answers, and technical buzzword summaries. |
-| [`Interview_Guide.html`](Interview_Guide.html) | **Created** | Interview Prep | Interactive HTML version of the interview guide. |
-| [`screenshots/01_swagger_docs.png`](screenshots/01_swagger_docs.png) | **Created** | Visual Proof | Screenshot of interactive Swagger UI running at `http://localhost:3000/docs`. |
-| [`screenshots/02_live_endpoints_verified.png`](screenshots/02_live_endpoints_verified.png) | **Created** | Visual Proof | Screenshot showing complete execution and output of all 9 live endpoints. |
-| [`screenshots/03_test_suite_passed.png`](screenshots/03_test_suite_passed.png) | **Created** | Visual Proof | Screenshot showing 37/37 automated tests passing in terminal. |
-| [`screenshots/live_demo_report.html`](screenshots/live_demo_report.html) | **Created** | Visual Proof | Dark-mode interactive HTML report of live endpoint executions. |
-| [`screenshots/test_results.html`](screenshots/test_results.html) | **Created** | Visual Proof | Visual terminal report of automated test suite results. |
+| [`src/middlewares/auth.middleware.js`](src/middlewares/auth.middleware.js) | **Created** | Middleware | JWT authentication middleware (`withAuth`, `authenticate`, `generateToken`). Validates `Authorization: Bearer <token>` against `JWT_SECRET`. Rejects missing/expired/invalid tokens with `401 Unauthorized`. |
+| [`src/handlers/auth.js`](src/handlers/auth.js) | **Created** | Controller | Token issuance endpoint (`POST /auth/token`). Accepts username and role, generates signed HS256 JWT tokens for API consumers and test suites. |
+| [`src/validators/customer.validator.js`](src/validators/customer.validator.js) | **Created** | Validator | Dedicated validation functions: `validateCreateCustomer` (`fullName`, RFC 5322 regex `email`) and `validateCustomerId` parameter. |
+| [`src/validators/account.validator.js`](src/validators/account.validator.js) | **Created** | Validator | Dedicated validation functions: `validateCreateAccount` (`type` enum, `currency` enum, non-negative 2-decimal `initialBalance`), `validateCustomerIdParam`, `validateAccountIdParam`. |
+| [`src/validators/transaction.validator.js`](src/validators/transaction.validator.js) | **Created** | Validator | Dedicated validation functions: `validateDeposit`, `validateWithdraw`, and `validateTransfer` (finite positive amounts, 2-decimal limits, currency enums, self-transfer prevention). |
+| [`src/repositories/customer.repository.js`](src/repositories/customer.repository.js) | **Created** | Repository | Encapsulates all customer DynamoDB operations: `findById` (`GetCommand`), `create` (`PutCommand`), and `delete` (`DeleteCommand`). |
+| [`src/repositories/account.repository.js`](src/repositories/account.repository.js) | **Created** | Repository | Encapsulates all account DynamoDB operations: `findById` (`GetCommand`), `create` (`PutCommand`), `findByCustomerId` (GSI `CustomerIdIndex` `QueryCommand`), `updateBalance` (atomic `UpdateCommand`), and `executeTransfer` (ACID `TransactWriteCommand` with emulator fallback). |
+| [`src/services/customer.service.js`](src/services/customer.service.js) | **Created** | Service | Core customer business logic: generates unique IDs (`cust_${uuidv4()}`), assigns default `ACTIVE` status and timestamps, orchestrates repository calls. |
+| [`src/services/account.service.js`](src/services/account.service.js) | **Created** | Service | Core account business logic: validates parent customer existence before creation/listing, generates unique account IDs (`acct_${uuidv4()}`), sets `OPEN` status. |
+| [`src/services/transaction.service.js`](src/services/transaction.service.js) | **Created** | Service | Financial transaction business rules: verifies accounts exist and are `OPEN`, checks currency matching, enforces overdraft prevention, coordinates atomic transfers. |
+| [`src/handlers/customers.js`](src/handlers/customers.js) | **Modified** | Controller | Refactored into a pure controller wrapped with `withAuth`. Delegates body validation to `customer.validator.js` and execution to `customer.service.js`. |
+| [`src/handlers/accounts.js`](src/handlers/accounts.js) | **Modified** | Controller | Refactored into a pure controller wrapped with `withAuth`. Delegates validation to `account.validator.js` and execution to `account.service.js`. |
+| [`src/handlers/transactions.js`](src/handlers/transactions.js) | **Modified** | Controller | Refactored into a pure controller wrapped with `withAuth`. Delegates validation to `transaction.validator.js` and execution to `transaction.service.js`. |
+| [`src/lib/response.js`](src/lib/response.js) | **Modified** | Core Utility | Added `unauthorized` (401) and `forbidden` (403) response helpers. Hardened `parseJsonBody` for strings, base64, and pre-parsed objects. |
+| [`src/lib/errors.js`](src/lib/errors.js) | **Modified** | Core Utility | Added `unauthorized(message)` factory for standardized 401 error instances. |
+| [`serverless.yml`](serverless.yml) | **Modified** | Configuration | Added `JWT_SECRET` environment variable, added `POST /auth/token` route, and mapped root `/` to Swagger UI (`docsUi`). |
+| [`openapi/openapi.yaml`](openapi/openapi.yaml) | **Modified** | API Specification | Documented `bearerAuth` security scheme (HTTP Bearer JWT), added `/auth/token` endpoint, and secured all banking endpoints with `security: [bearerAuth: []]`. |
+| [`package.json`](package.json) | **Modified** | Configuration | Added `jsonwebtoken` dependency. Configured test scripts and dev scripts. |
+| [`test/auth.middleware.test.js`](test/auth.middleware.test.js) | **Created** | Automated Test | 6 unit tests covering token generation, valid verification, expired/tampered tokens, and missing Authorization headers. |
+| [`test/validators.test.js`](test/validators.test.js) | **Created** | Automated Test | 18 unit tests covering all customer, account, and transaction validator functions. |
+| [`test/services.test.js`](test/services.test.js) | **Created** | Automated Test | 10 unit tests covering domain business logic for customers, accounts, and transactions. |
+| [`test/repositories.test.js`](test/repositories.test.js) | **Created** | Automated Test | 8 unit tests covering DynamoDB repository queries, point reads, updates, and transactions. |
+| [`test/customers.test.js`](test/customers.test.js) | **Modified** | Automated Test | 9 unit tests updated with JWT authentication headers. |
+| [`test/accounts.test.js`](test/accounts.test.js) | **Modified** | Automated Test | 13 unit tests updated with JWT authentication headers. |
+| [`test/transactions.test.js`](test/transactions.test.js) | **Modified** | Automated Test | 15 unit tests updated with JWT authentication headers. |
+| [`scripts/dev.js`](scripts/dev.js) | **Created** | Dev Experience | 1-command startup: auto-cleans stale ports (8000/3000/3002), starts local DynamoDB, seeds tables, and starts serverless-offline. |
+| [`scripts/start-local-db.js`](scripts/start-local-db.js) | **Created** | Infrastructure | In-memory DynamoDB Local server powered by `dynalite` (no Docker required). |
+| [`scripts/capture-all-screenshots.js`](scripts/capture-all-screenshots.js) | **Modified** | Verification / QA | Tests live unauthenticated 401 guards, fetches JWT token from `/auth/token`, tests all endpoints with Bearer token, and captures PNG screenshots. |
+| [`scripts/generate-architecture-pdf.js`](scripts/generate-architecture-pdf.js) | **Updated** | Documentation | Automated PDF generator for this document via headless Edge/Chromium. |
+| [`scripts/generate-interview-pdf.js`](scripts/generate-interview-pdf.js) | **Updated** | Interview Prep | Generates the candidate interview preparation PDF guide with detailed Q&A on the layered architecture. |
+| [`screenshots/01_swagger_docs.png`](screenshots/01_swagger_docs.png) | **Updated** | Visual Proof | Screenshot of interactive Swagger UI showing all endpoints including `/auth/token` and Bearer auth. |
+| [`screenshots/02_live_endpoints_verified.png`](screenshots/02_live_endpoints_verified.png) | **Updated** | Visual Proof | Screenshot of live test suite showing 401 unauthenticated guard, JWT token generation, and live execution. |
+| [`screenshots/03_test_suite_passed.png`](screenshots/03_test_suite_passed.png) | **Updated** | Visual Proof | Screenshot of terminal showing all **79 automated tests passing across 26 test suites**. |
 
 ---
 
-## 2. Detailed Breakdown by Layer
+## 3. Deep Dive into the 4 Architecture Layers
 
-### Layer 1: Handlers (`src/handlers/`)
+### Layer 1: Middleware & Authentication (`src/middlewares/`)
+- **`src/middlewares/auth.middleware.js`**:
+  - `generateToken(payload)`: Signs JWT using `jsonwebtoken` with 2-hour expiration and `JWT_SECRET`.
+  - `authenticate(event)`: Extracts `Authorization: Bearer <token>` from HTTP headers. Verifies token cryptographically. Throws `HttpError.unauthorized` on missing, malformed, or expired tokens.
+  - `withAuth(handler)`: Higher-order function wrapping Lambda handlers. Handles auth rejection automatically, attaching `event.user` to the request context.
+- **`src/handlers/auth.js`**:
+  - `createToken(event)`: Public endpoint `POST /auth/token` for testing and API consumers to acquire valid tokens.
 
-#### 1. Customers (`src/handlers/customers.js`)
-- **What was originally there**: Stubs returning `501 Not Implemented`.
-- **What was built**:
-  - `create(event)`:
-    - Parses request body via `parseJsonBody`.
-    - Validates `fullName` (must be non-empty string).
-    - Validates `email` against RFC 5322 regex pattern (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`).
-    - Generates unique customer ID: `cust_${uuidv4()}`.
-    - Sets initial status to `"ACTIVE"` and `createdAt` timestamp.
-    - Persists item to DynamoDB `Customers` table with `PutCommand`.
-    - Returns `201 Created` with Customer schema.
-  - `get(event)`:
-    - Extracts `customerId` from `event.pathParameters`.
-    - Performs $O(1)$ point lookup using `GetCommand` on partition key `customerId`.
-    - Returns `200 OK` with customer data if found, or `404 Not Found` with `{ error: "NOT_FOUND", message: "..." }`.
+### Layer 2: Handlers / Controllers (`src/handlers/`)
+Handlers act as thin controllers. They have zero direct database access and zero domain business rules:
+1. Parse HTTP event headers and body (`parseJsonBody`).
+2. Call validator functions (`validateCreateCustomer`, etc.).
+3. Pass validated DTOs (Data Transfer Objects) to the corresponding Service (`customerService.createCustomer`, etc.).
+4. Format service return values into HTTP response envelopes (`ok`, `created`).
 
-#### 2. Accounts (`src/handlers/accounts.js`)
-- **What was originally there**: Stubs returning `501 Not Implemented`.
-- **What was built**:
-  - `create(event)`:
-    - Validates customer existence first via `GetCommand` (returns `404` if customer does not exist).
-    - Validates `type` enum (`CHECKING` or `SAVINGS`).
-    - Validates `currency` enum (`CAD` or `USD`).
-    - Validates `initialBalance` ($\ge 0$, finite number, max 2 decimal places to avoid floating-point errors).
-    - Generates `accountId: acct_${uuidv4()}`, sets status `"OPEN"`, and saves to `Accounts` table including `customerId` attribute.
-    - Returns `201 Created`.
-  - `list(event)`:
-    - Verifies customer exists (`404` if not).
-    - **Crucial Architecture Decision**: Instead of running a costly `Scan` with a filter, uses `QueryCommand` targeting the Global Secondary Index (`IndexName: "CustomerIdIndex"`).
-    - Key condition: `customerId = :customerId`.
-    - Returns `200 OK` with `{ items: Account[] }`.
-  - `get(event)`:
-    - Performs direct point read with `GetCommand` by `accountId`.
-    - Returns `200 OK` including current balance, or `404 Not Found`.
+### Layer 3: Validators (`src/validators/`)
+Pure, exported validator functions that fail fast with descriptive 400 Bad Request errors:
+- **`src/validators/customer.validator.js`**:
+  - `validateCreateCustomer(body)`: Validates `fullName` (non-empty string) and `email` (RFC 5322 regex).
+  - `validateCustomerId(id)`: Ensures `customerId` path parameter is non-empty.
+- **`src/validators/account.validator.js`**:
+  - `validateCreateAccount(body)`: Validates `type` (`CHECKING`, `SAVINGS`), `currency` (`CAD`, `USD`), and `initialBalance` ($\ge 0$, finite, $\le 2$ decimal places).
+  - `validateCustomerIdParam(id)` & `validateAccountIdParam(id)`.
+- **`src/validators/transaction.validator.js`**:
+  - `validateDeposit(body)` & `validateWithdraw(body)`: Ensures `amount > 0`, $\le 2$ decimal places, and valid `currency`.
+  - `validateTransfer(body)`: Validates `fromAccountId`, `toAccountId`, distinct accounts (`from !== to`), valid currency, and positive amount.
 
-#### 3. Transactions — Stretch Goals (`src/handlers/transactions.js`)
-- **What was originally there**: Stubs returning `501 Not Implemented`.
-- **What was built**:
-  - `deposit(event)`:
-    - Validates positive amount (max 2 decimal places) and matching currency.
-    - Verifies account exists and is in `OPEN` status.
-    - Uses atomic `UpdateCommand`: `SET balance = balance + :amount`.
-    - Uses `ConditionExpression: "attribute_exists(accountId) AND #status = :openStatus AND currency = :currency"`.
-    - Returns `200 OK` with updated Account object.
-  - `withdraw(event)`:
-    - Validates positive amount and matching currency.
-    - Verifies account exists and is `OPEN`.
-    - Validates sufficient balance (`balance >= amount`); returns `409 Conflict` if insufficient funds.
-    - Atomic debit via `UpdateCommand`: `SET balance = balance - :amount`.
-    - Concurrency guard: `ConditionExpression: "balance >= :amount AND #status = :openStatus AND currency = :currency"`.
-    - If another transaction drops balance concurrently, catches `ConditionalCheckFailedException` and returns `409 Conflict`.
-  - `transfer(event)`:
-    - Cross-account fund movement between `fromAccountId` and `toAccountId`.
-    - Validates both accounts exist, are `OPEN`, share the same currency, and `fromAccountId !== toAccountId`.
-    - Validates `fromAccount.balance >= amount`.
-    - **All-or-Nothing Atomicity**: Executes both balance updates together in a single `TransactWriteCommand` (`TransactWriteItems`).
-    - Concurrency safety: Debit item requires `balance >= :amount`. If a concurrent withdrawal occurs, DynamoDB aborts the entire transaction with `TransactionCanceledException`, caught and returned as `409 Conflict`.
-    - Includes fallback for local emulators lacking transactions with two-phase conditional update and compensating rollback.
+### Layer 4: Services (`src/services/`)
+Houses domain business logic, orchestration, and business invariant checks:
+- **`src/services/customer.service.js`**:
+  - `createCustomer(dto)`: Assigns unique ID `cust_${uuidv4()}`, initial status `ACTIVE`, timestamp, and calls `customerRepository.create`.
+  - `getCustomer(customerId)`: Calls repository; throws `HttpError.notFound` if null.
+- **`src/services/account.service.js`**:
+  - `createAccount(customerId, dto)`: Verifies customer exists first via `customerRepository.findById`, sets `OPEN` status and initial balance, and saves via `accountRepository.create`.
+  - `listAccounts(customerId)`: Verifies customer existence first (returns 404 if missing, preventing silent empty lists for invalid IDs), then calls `accountRepository.findByCustomerId`.
+  - `getAccount(accountId)`: Retrieves account with current balance; throws 404 if missing.
+- **`src/services/transaction.service.js`**:
+  - `deposit(accountId, dto)`: Verifies account exists, is `OPEN`, and currency matches. Calls repository `updateBalance(+amount)`.
+  - `withdraw(accountId, dto)`: Verifies account exists, is `OPEN`, currency matches, and `balance >= amount` (throws 409 Conflict if insufficient). Calls repository `updateBalance(-amount)` with condition check.
+  - `transfer(dto)`: Verifies both accounts exist, both are `OPEN`, currency matches between accounts and transfer payload, and source balance is sufficient. Calls repository `executeTransfer`.
+
+### Layer 5: Repositories (`src/repositories/`)
+Encapsulates all DynamoDB SDK commands and query execution:
+- **`src/repositories/customer.repository.js`**:
+  - `findById(customerId)` &rarr; `GetCommand`
+  - `create(customerItem)` &rarr; `PutCommand`
+  - `delete(customerId)` &rarr; `DeleteCommand`
+- **`src/repositories/account.repository.js`**:
+  - `findById(accountId)` &rarr; `GetCommand`
+  - `create(accountItem)` &rarr; `PutCommand`
+  - `findByCustomerId(customerId)` &rarr; `QueryCommand` targeting GSI `CustomerIdIndex` (`KeyConditionExpression: "customerId = :customerId"`)
+  - `updateBalance(accountId, amount, ...)` &rarr; `UpdateCommand` (`SET balance = balance + :amount`)
+  - `executeTransfer(...)` &rarr; `TransactWriteCommand` (`TransactWriteItems`) for cross-account atomicity, with resilient fallback.
 
 ---
 
-### Layer 2: Core Helpers (`src/lib/`)
+## 4. Automated Testing Verification (79 Tests Passing)
 
-- **`src/lib/response.js`**:
-  - Prepares API Gateway JSON responses with `Content-Type: application/json` and CORS headers.
-  - Implements helpers: `ok` (200), `created` (201), `badRequest` (400), `notFound` (404), `conflict` (409), `serverError` (500).
-  - Enhanced `parseJsonBody` to handle raw strings, base64-encoded strings, and pre-parsed objects, rejecting invalid non-objects (e.g. primitives or arrays) with `400 Bad Request`.
-- **`src/lib/dynamodb.js`**:
-  - Initializes `DynamoDBClient` with local credentials and endpoint (`http://localhost:8000`).
-  - Wraps in `DynamoDBDocumentClient.from(client, { marshallOptions: { removeUndefinedValues: true } })`.
-  - Exports `TABLES` dictionary (`Customers`, `Accounts`).
+The test suite was expanded from 37 to **79 tests across 26 test suites**, testing each architectural layer in isolation using `aws-sdk-client-mock`:
 
----
-
-### Layer 3: Automated Test Suite (`test/`)
-
-Built using Node's native `node:test` and `node:assert` framework combined with `aws-sdk-client-mock`:
-
-1. **`test/customers.test.js` (9 tests)**:
-   - Happy path customer creation (returns 201, verifies `PutCommand` payload).
-   - Validation rejection: missing `fullName` (400).
-   - Validation rejection: whitespace-only `fullName` (400).
-   - Validation rejection: missing/invalid `email` (400).
-   - Validation rejection: missing body / non-JSON body (400).
-   - Happy path customer retrieval by ID (200).
-   - Customer not found error (404).
-   - Missing path parameter validation (400).
-
-2. **`test/accounts.test.js` (13 tests)**:
-   - Account creation with default `initialBalance = 0` (201).
-   - Account creation with custom `initialBalance` (201).
-   - Non-existent customer error on create (404).
-   - Invalid account type rejection (400).
-   - Invalid currency rejection (400).
-   - Negative `initialBalance` rejection (400).
-   - Fractional cent (>2 decimal places) rejection (400).
-   - Listing accounts via GSI `CustomerIdIndex` Query (200).
-   - Empty list for customer with no accounts (200).
-   - Non-existent customer error on listing (404).
-   - Account retrieval by ID with balance (200).
-   - Account not found error (404).
-   - Missing path parameter validation (400).
-
-3. **`test/transactions.test.js` (15 tests)**:
-   - Deposit happy path with balance increment (200).
-   - Deposit on non-existent account (404).
-   - Deposit with non-positive amount (400).
-   - Deposit currency mismatch (400).
-   - Deposit on closed account (400).
-   - Withdrawal happy path with balance decrement (200).
-   - Withdrawal insufficient funds (409 Conflict).
-   - Withdrawal condition check race condition simulation (409 Conflict).
-   - Withdrawal on non-existent account (404).
-   - Atomic transfer happy path via `TransactWriteCommand` (200).
-   - Self-transfer rejection (400).
-   - Source account not found (404).
-   - Insufficient funds transfer rejection (409 Conflict).
-   - Currency mismatch transfer rejection (400).
-   - `TransactionCanceledException` collision simulation (409 Conflict).
-
-**Total: 37 automated tests across 11 test suites with 0 failures.**
+```
+✔ Auth Middleware > generateToken & authenticate > generates a valid JWT token (0.7ms)
+✔ Auth Middleware > generateToken & authenticate > successfully authenticates event with valid Bearer token (0.4ms)
+✔ Auth Middleware > generateToken & authenticate > rejects event with missing Authorization header (0.7ms)
+✔ Auth Middleware > generateToken & authenticate > rejects event with malformed Authorization header (0.3ms)
+✔ Auth Middleware > generateToken & authenticate > rejects event with invalid token (0.3ms)
+✔ Auth Middleware > withAuth wrapper > attaches decoded user to event and calls wrapped handler (0.4ms)
+✔ Customer Validators > validateCreateCustomer > succeeds with valid payload (0.2ms)
+✔ Customer Validators > validateCreateCustomer > rejects missing or empty fullName (0.2ms)
+✔ Customer Validators > validateCreateCustomer > rejects invalid email formats (0.3ms)
+✔ Account Validators > validateCreateAccount > succeeds with valid checking account (0.2ms)
+✔ Account Validators > validateCreateAccount > rejects invalid account type (0.2ms)
+✔ Account Validators > validateCreateAccount > rejects negative balance or fractional cents (0.3ms)
+✔ Transaction Validators > validateTransfer > rejects self-transfers (0.2ms)
+✔ Customer Service > createCustomer & getCustomer > generates customer with cust_ prefix (0.3ms)
+✔ Account Service > listAccounts > queries customer accounts (0.3ms)
+✔ Transaction Service > transfer > throws 409 when insufficient funds (0.3ms)
+✔ Customer Repository > findById > sends GetCommand (0.4ms)
+✔ Account Repository > findByCustomerId > queries CustomerIdIndex GSI (0.3ms)
+✔ Customers Handlers > create > returns 201 Created (1.5ms)
+✔ Accounts Handlers > list > returns 200 with accounts from GSI (1.2ms)
+✔ Transactions Handlers > transfer > returns 200 with TransactWriteItems (1.5ms)
+...
+ℹ tests 79
+ℹ suites 26
+ℹ pass 79
+ℹ fail 0
+ℹ duration_ms 592
+```
 
 ---
 
-### Layer 4: Developer Experience & Scripts (`scripts/`)
+## 5. Summary Checklist of All Requirements Satisfied
 
-- **`scripts/dev.js`**:
-  - The flagship 1-command startup script (`npm run dev`).
-  - Automatically kills stale processes on ports 8000, 3000, and 3002 before starting.
-  - Automatically copies `.env.example` to `.env` if missing.
-  - Spawns in-memory DynamoDB Local on port 8000.
-  - Executes `scripts/create-tables.js` and `scripts/seed.js`.
-  - Spawns `serverless offline` on port 3000.
-  - Handles `SIGINT` / `SIGTERM` to gracefully shut down child processes.
-- **`scripts/start-local-db.js`**:
-  - Lightweight in-memory DynamoDB server powered by `dynalite`.
-  - Provides a complete DynamoDB-compatible API on port 8000 without requiring Docker Desktop or Java.
-  - Gracefully handles `EADDRINUSE` if port 8000 is already active.
-- **`scripts/create-tables.js`**:
-  - Recreates `Customers` table (`customerId` HASH).
-  - Recreates `Accounts` table (`accountId` HASH + GSI `CustomerIdIndex` on `customerId`).
-  - Added backoff delays and `ResourceInUseException` error handling.
-- **`scripts/capture-all-screenshots.js`**:
-  - Automatically tests all 9 endpoints against the live server.
-  - Generates HTML visual reports and captures PNG screenshots via headless Microsoft Edge.
-- **`scripts/generate-interview-pdf.js`**:
-  - Converts the interview guide into a printable PDF document using Chromium.
-
----
-
-### Layer 5: Configuration & Root Files
-
-- **`serverless.yml`**:
-  - Mapped root path `/` to `docsUi` handler alongside `/docs`.
-- **`package.json`**:
-  - Added scripts:
-    - `"dev": "node scripts/dev.js"`
-    - `"test": "node --test test/**/*.test.js"`
-    - `"db:local": "node scripts/start-local-db.js"`
-    - `"screenshots": "node scripts/capture-all-screenshots.js"`
-  - Added devDependencies: `aws-sdk-client-mock`, `dynalite`.
-- **`README.md`**:
-  - Added command reference table, links to documentation and screenshots.
-- **`NOTES.md`**:
-  - Comprehensive architectural review covering DynamoDB access patterns, ACID transaction guarantees, concurrency handling, and live demo commands.
-- **`.env`**:
-  - Created from `.env.example` with local endpoint and table configurations.
-
----
-
-## 3. How to Explain Your Work in an Interview
-
-### 1. Opening Statement
-> *"When taking on this assessment, I structured the solution into three primary layers:
-> 1. **Contract Adherence**: Implementing all core and stretch endpoints strictly according to the OpenAPI 3.0 specification.
-> 2. **DynamoDB Access Optimization**: Ensuring zero table Scans by using point reads and a Global Secondary Index (GSI) for customer account queries.
-> 3. **Financial Integrity**: Guaranteeing ACID atomicity on transfers via `TransactWriteItems` and optimistic concurrency controls on balances to prevent overdrafts."*
-
-### 2. What to Say About the Codebase Structure
-> *"I maintained clean separation of concerns:
-> - `src/handlers/` holds the Lambda handlers, keeping them focused purely on parsing, validation, and invoking DynamoDB commands.
-> - `src/lib/` encapsulates shared DynamoDB DocumentClient connections and standardized HTTP response formatters.
-> - `test/` contains 37 unit tests using `aws-sdk-client-mock`, allowing tests to run in under 300ms without spinning up live databases.
-> - `scripts/` contains database migrations, seeding, and a unified `npm run dev` script that auto-cleans ports and starts the full stack in one step."*
-
-### 3. What to Say About DynamoDB Design Decisions
-> *"In DynamoDB, access patterns dictate the table schema:
-> - For individual customer and account lookups, partition key lookups (`GetCommand`) provide predictable $O(1)$ latency.
-> - For listing accounts by customer, querying the `CustomerIdIndex` GSI targets only that customer's partition. This avoids the $O(N)$ linear latency and unbounded cost of a Scan operation.
-> - For cross-account transfers, I used `TransactWriteCommand` to ensure that debit and credit operations commit atomically together. If either account fails condition checks (e.g. insufficient balance or closed status), the entire transaction aborts with zero risk of funds being lost or created."*
+- [x] **Service Layer Created**: `src/services/customer.service.js`, `src/services/account.service.js`, `src/services/transaction.service.js`.
+- [x] **Repository Layer Created**: `src/repositories/customer.repository.js`, `src/repositories/account.repository.js` encapsulating all DynamoDB commands (`GetCommand`, `PutCommand`, `DeleteCommand`, `QueryCommand`, `UpdateCommand`, `TransactWriteCommand`).
+- [x] **Validator Layer Created**: `src/validators/customer.validator.js`, `src/validators/account.validator.js`, `src/validators/transaction.validator.js` with pure exported validation functions.
+- [x] **Handlers Refactored**: Handlers are pure controllers delegating HTTP requests to validators and services.
+- [x] **JWT Middleware Implemented**: `src/middlewares/auth.middleware.js` with `withAuth` guarding every endpoint and checking Bearer tokens.
+- [x] **Token Endpoint Added**: `POST /auth/token` implemented in `src/handlers/auth.js` and registered in `serverless.yml` and `openapi/openapi.yaml`.
+- [x] **Automated Tests**: 79 tests passing across 26 test suites with 0 failures.
+- [x] **Documentation & PDFs**: Architecture document and technical interview guide generated in Markdown, HTML, and high-resolution PDF formats.

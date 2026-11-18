@@ -5,7 +5,7 @@
   <title>Banking API Assessment — Complete Code Changes & Architecture Guide</title>
   <style>
     @page {
-      margin: 12mm 14mm;
+      margin: 11mm 13mm;
       size: A4 portrait;
     }
     *, *:before, *:after { box-sizing: border-box; }
@@ -13,24 +13,24 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #1f2937;
       background: #ffffff;
-      line-height: 1.5;
-      font-size: 13px;
+      line-height: 1.45;
+      font-size: 12.5px;
       margin: 0;
       padding: 0;
     }
     .header {
       border-bottom: 2.5px solid #2563eb;
-      padding-bottom: 10px;
-      margin-bottom: 16px;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
     }
     .header h1 {
       margin: 0 0 4px 0;
-      font-size: 22px;
+      font-size: 21px;
       color: #1e3a8a;
       letter-spacing: -0.5px;
     }
     .header .subtitle {
-      font-size: 12.5px;
+      font-size: 12px;
       color: #4b5563;
       display: flex;
       justify-content: space-between;
@@ -40,39 +40,40 @@
       display: inline-block;
       padding: 2px 7px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       text-transform: uppercase;
     }
     .badge-blue { background: #dbeafe; color: #1e40af; }
     .badge-green { background: #dcfce7; color: #166534; }
+    .badge-purple { background: #f3e8ff; color: #6b21a8; }
     .badge-amber { background: #fef3c7; color: #92400e; }
 
     h2 {
       color: #1e40af;
-      font-size: 15px;
+      font-size: 14.5px;
       border-left: 4px solid #2563eb;
       padding-left: 8px;
-      margin: 18px 0 8px 0;
+      margin: 16px 0 8px 0;
       page-break-after: avoid;
     }
     h3 {
       color: #0f172a;
-      font-size: 13.5px;
-      margin: 12px 0 6px 0;
+      font-size: 13px;
+      margin: 10px 0 5px 0;
       page-break-after: avoid;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 8px 0 14px 0;
-      font-size: 12px;
+      margin: 6px 0 12px 0;
+      font-size: 11.5px;
       page-break-inside: avoid;
     }
     th, td {
       border: 1px solid #cbd5e1;
-      padding: 6px 8px;
+      padding: 5px 7px;
       text-align: left;
       vertical-align: top;
     }
@@ -89,13 +90,13 @@
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 6px;
-      padding: 10px 12px;
-      margin-bottom: 10px;
+      padding: 9px 11px;
+      margin-bottom: 9px;
       page-break-inside: avoid;
     }
 
     .card-title {
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 700;
       color: #0f172a;
       margin-bottom: 4px;
@@ -105,7 +106,7 @@
     }
 
     ul {
-      margin: 4px 0 6px 16px;
+      margin: 3px 0 5px 16px;
       padding: 0;
     }
     li {
@@ -114,7 +115,7 @@
 
     code {
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 11.5px;
+      font-size: 11px;
       background: #f1f5f9;
       padding: 1px 4px;
       border-radius: 3px;
@@ -125,10 +126,24 @@
       background: #eff6ff;
       border-left: 3px solid #2563eb;
       padding: 8px 12px;
-      margin-top: 6px;
-      font-style: italic;
+      margin: 6px 0;
       color: #1e3a8a;
       border-radius: 0 4px 4px 0;
+      font-size: 12px;
+    }
+
+    .arch-diagram {
+      background: #0f172a;
+      color: #38bdf8;
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      line-height: 1.35;
+      margin: 8px 0;
+      white-space: pre;
+      overflow-x: auto;
+      page-break-inside: avoid;
     }
 
     .page-break {
@@ -141,200 +156,162 @@
   <div class="header">
     <h1>Banking API Assessment — Complete Code Changes & Architecture Guide</h1>
     <div class="subtitle">
-      <span><strong>Technical Audit & Interview Presentation Document</strong></span>
-      <span><span class="badge badge-green">37 / 37 Tests Passing</span> <span class="badge badge-blue">Complete Core + Stretch</span></span>
+      <span><strong>Clean 4-Tier Architecture with JWT Authentication & DynamoDB</strong></span>
+      <span><span class="badge badge-green">79 Tests Passing (26 Suites)</span> <span class="badge badge-blue">Recruiter Feedback Refactor</span></span>
     </div>
   </div>
 
-  <h2>1. Master File Change Matrix</h2>
+  <h2>1. Recruiter Feedback & Architecture Evolution</h2>
+  <div class="quote-box">
+    <strong>Recruiter Feedback Addressed:</strong><br />
+    <em>"Why you are not separated, like the services, account service, transaction service, or customer service... And also make repository, mention all your queries... DynamoDB get commands, put command, delete command, queries... And validation: make a separate folder/file for validation, export functions and call operations to validate request body, parameters... Add authentication with JWT middleware in every API."</em>
+  </div>
+
+  <p>In response, the system was refactored from coupled Lambda handlers into a <strong>4-Tier Clean Architecture</strong> separating concerns across Controllers, Middlewares, Validators, Services, and Repositories:</p>
+
+  <div class="arch-diagram">HTTP Request ──&gt; JWT Auth Middleware [src/middlewares/auth.middleware.js]
+                     │ (Verifies Bearer token, attaches decoded user or throws 401)
+                     ▼
+          Controllers / Handlers [src/handlers/*.js]
+                     │ (Thin controllers: parse JSON, invoke validator, call service)
+           ┌─────────┴─────────┐
+           ▼                   ▼
+    Validator Layer      Service Layer [src/services/*.js]
+  [src/validators/*.js]    │ (Domain business logic, financial rules, overdraft checks)
+  (Pure functions, checks   ▼
+   regex, 2-decimals,    Repository Layer [src/repositories/*.js]
+   returns 400 errors)     │ (Encapsulates GetCommand, PutCommand, DeleteCommand,
+                           │  GSI QueryCommand, UpdateCommand, TransactWriteCommand)
+                           ▼
+                 Amazon DynamoDB (Customers &amp; Accounts Tables)</div>
+
+  <h2>2. Master File Change Matrix</h2>
   <table>
     <thead>
       <tr>
-        <th style="width: 25%;">File Path</th>
-        <th style="width: 12%;">Status</th>
-        <th style="width: 15%;">Layer</th>
-        <th>Work Performed & Technical Purpose</th>
+        <th style="width: 26%;">File Path</th>
+        <th style="width: 10%;">Status</th>
+        <th style="width: 14%;">Layer</th>
+        <th>Technical Purpose & Summary of Changes</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><code>src/handlers/customers.js</code></td>
-        <td><span class="badge badge-blue">Modified</span></td>
-        <td>Business Logic</td>
-        <td>Replaced 501 stubs. Implemented <code>POST /customers</code> (validation, UUID, status ACTIVE) and <code>GET /customers/{id}</code> (O(1) point read).</td>
+        <td><code>src/middlewares/auth.middleware.js</code></td>
+        <td><span class="badge badge-green">Created</span></td>
+        <td>Middleware</td>
+        <td>JWT Bearer token verification (<code>authenticate</code>, <code>withAuth</code>, <code>generateToken</code>). Secures every endpoint with 401 guard.</td>
       </tr>
       <tr>
-        <td><code>src/handlers/accounts.js</code></td>
-        <td><span class="badge badge-blue">Modified</span></td>
-        <td>Business Logic</td>
-        <td>Replaced 501 stubs. Implemented <code>POST /accounts</code> (parent customer check, currency/type validation), <code>GET /accounts</code> via <strong>GSI CustomerIdIndex Query</strong>, and <code>GET /accounts/{id}</code>.</td>
+        <td><code>src/handlers/auth.js</code></td>
+        <td><span class="badge badge-green">Created</span></td>
+        <td>Controller</td>
+        <td>Implements <code>POST /auth/token</code> to generate signed HS256 tokens for API clients and automated tests.</td>
       </tr>
       <tr>
-        <td><code>src/handlers/transactions.js</code></td>
+        <td><code>src/validators/*.validator.js</code></td>
+        <td><span class="badge badge-green">Created</span></td>
+        <td>Validator</td>
+        <td>Dedicated validator functions: <code>customer.validator.js</code>, <code>account.validator.js</code>, <code>transaction.validator.js</code> (validates enums, bodies, 2-decimals, IDs).</td>
+      </tr>
+      <tr>
+        <td><code>src/services/*.service.js</code></td>
+        <td><span class="badge badge-green">Created</span></td>
+        <td>Service</td>
+        <td>Domain logic: <code>customer.service.js</code>, <code>account.service.js</code>, <code>transaction.service.js</code> (business rules, balances, status checks, orchestrations).</td>
+      </tr>
+      <tr>
+        <td><code>src/repositories/*.repository.js</code></td>
+        <td><span class="badge badge-green">Created</span></td>
+        <td>Repository</td>
+        <td>All DynamoDB commands: <code>customer.repository.js</code> (Get, Put, Delete), <code>account.repository.js</code> (Get, Put, GSI Query, Update, TransactWriteItems).</td>
+      </tr>
+      <tr>
+        <td><code>src/handlers/*.js</code></td>
         <td><span class="badge badge-blue">Modified</span></td>
-        <td>Business Logic (Stretch)</td>
-        <td>Replaced 501 stubs. Implemented atomic deposits, overdraft-protected withdrawals, and atomic cross-account transfers using <strong>DynamoDB ACID TransactWriteItems</strong>.</td>
+        <td>Controller</td>
+        <td>Refactored <code>customers.js</code>, <code>accounts.js</code>, <code>transactions.js</code> to thin controllers wrapped with <code>withAuth</code>.</td>
       </tr>
       <tr>
         <td><code>src/lib/response.js</code></td>
         <td><span class="badge badge-blue">Modified</span></td>
         <td>Core Utility</td>
-        <td>Hardened <code>parseJsonBody</code> to support strings, base64, and pre-parsed objects. Enforced <code>{ error, message }</code> OpenAPI error schemas.</td>
+        <td>Added <code>unauthorized</code> (401), <code>forbidden</code> (403), hardened <code>parseJsonBody</code> for strings, objects, base64.</td>
       </tr>
       <tr>
         <td><code>serverless.yml</code></td>
         <td><span class="badge badge-blue">Modified</span></td>
         <td>Configuration</td>
-        <td>Added root <code>/</code> route mapping to <code>docsUi</code> so opening <code>http://localhost:3000</code> loads Swagger UI directly.</td>
+        <td>Added <code>JWT_SECRET</code> env, registered <code>POST /auth/token</code>, mapped <code>/</code> and <code>/docs</code> to Swagger UI.</td>
       </tr>
       <tr>
-        <td><code>package.json</code></td>
+        <td><code>openapi/openapi.yaml</code></td>
         <td><span class="badge badge-blue">Modified</span></td>
-        <td>Configuration</td>
-        <td>Added <code>dev</code>, <code>test</code>, <code>db:local</code>, and <code>screenshots</code> scripts. Added <code>aws-sdk-client-mock</code> and <code>dynalite</code> devDependencies.</td>
+        <td>API Spec</td>
+        <td>Added <code>bearerAuth</code> security scheme, documented <code>/auth/token</code>, and applied <code>security: [bearerAuth: []]</code>.</td>
       </tr>
       <tr>
-        <td><code>README.md</code></td>
-        <td><span class="badge badge-blue">Modified</span></td>
-        <td>Documentation</td>
-        <td>Added command quick-reference table, architecture diagrams, and documentation links.</td>
-      </tr>
-      <tr>
-        <td><code>.env</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>Configuration</td>
-        <td>Configured environment variables for local DynamoDB connection on <code>http://localhost:8000</code>.</td>
-      </tr>
-      <tr>
-        <td><code>test/customers.test.js</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>Automated Test</td>
-        <td>9 tests covering customer creation, missing fields, email regex validation, and 404 not found handling.</td>
-      </tr>
-      <tr>
-        <td><code>test/accounts.test.js</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>Automated Test</td>
-        <td>13 tests covering account creation, initial balance precision, currency validation, 404s, and GSI queries.</td>
-      </tr>
-      <tr>
-        <td><code>test/transactions.test.js</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>Automated Test</td>
-        <td>15 tests covering deposits, withdrawals, overdraft protection (409), atomic transfers, and concurrency collisions.</td>
-      </tr>
-      <tr>
-        <td><code>scripts/dev.js</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>Dev Experience</td>
-        <td>1-command startup: auto-cleans stale ports (8000/3000/3002), auto-copies <code>.env</code>, starts local DB, seeds data, and starts API.</td>
-      </tr>
-      <tr>
-        <td><code>scripts/start-local-db.js</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>Infrastructure</td>
-        <td>Pure Node.js in-memory DynamoDB Local server using <code>dynalite</code> (eliminates Docker Desktop requirement).</td>
-      </tr>
-      <tr>
-        <td><code>scripts/create-tables.js</code></td>
-        <td><span class="badge badge-blue">Modified</span></td>
-        <td>Migration</td>
-        <td>Hardened table recreation logic with backoff delays and <code>ResourceInUseException</code> resilience.</td>
-      </tr>
-      <tr>
-        <td><code>scripts/capture-all-screenshots.js</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>QA / Verification</td>
-        <td>Runs end-to-end tests for all 9 API operations against localhost:3000 and captures high-res PNG screenshots.</td>
-      </tr>
-      <tr>
-        <td><code>NOTES.md</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>Documentation</td>
-        <td>Complete technical documentation on DynamoDB access patterns, ACID transactions, and curl demo commands.</td>
-      </tr>
-      <tr>
-        <td><code>Banking_API_Interview_Guide.pdf</code></td>
-        <td><span class="badge badge-green">Created</span></td>
-        <td>Interview Prep</td>
-        <td>Printable PDF guide with elevator pitches, model answers to interviewer questions, and cheat sheets.</td>
+        <td><code>test/**/*.test.js</code></td>
+        <td><span class="badge badge-green">Expanded</span></td>
+        <td>Testing</td>
+        <td>Expanded to <strong>79 tests across 26 test suites</strong> covering auth, validators, services, repositories, and handlers.</td>
       </tr>
     </tbody>
   </table>
 
   <div class="page-break"></div>
 
-  <h2>2. Detailed Architecture & Code Implementation</h2>
+  <h2>3. Detailed Breakdown by Architectural Layer</h2>
 
   <div class="card">
-    <div class="card-title">1. Customers Handlers (<code>src/handlers/customers.js</code>)</div>
-    <p>Replaced initial 501 stubs with production handlers:</p>
+    <div class="card-title"><span class="badge badge-purple">Layer 1</span> Middleware & Authentication (<code>src/middlewares/auth.middleware.js</code>)</div>
     <ul>
-      <li><code>create(event)</code>:
-        <ul>
-          <li>Parses request body via <code>parseJsonBody</code>.</li>
-          <li>Validates <code>fullName</code> (non-empty string) and <code>email</code> (RFC 5322 regex pattern).</li>
-          <li>Generates unique ID with <code>uuidv4()</code> prefixed as <code>cust_&lt;uuid&gt;</code>.</li>
-          <li>Sets status <code>ACTIVE</code> and ISO timestamp <code>createdAt</code>.</li>
-          <li>Persists to <code>Customers</code> table with <code>PutCommand</code> and returns <code>201 Created</code>.</li>
-        </ul>
-      </li>
-      <li><code>get(event)</code>:
-        <ul>
-          <li>Performs direct $O(1)$ point lookup using <code>GetCommand</code> by partition key <code>customerId</code>.</li>
-          <li>Returns <code>200 OK</code> with customer item or <code>404 Not Found</code> with <code>{ error: "NOT_FOUND", message: "..." }</code>.</li>
-        </ul>
+      <li><strong>Token Generation (<code>generateToken</code>):</strong> Signs JWT with payload <code>{ sub, username, role }</code> using <code>jsonwebtoken</code> (HS256) and a 2-hour expiry.</li>
+      <li><strong>Bearer Token Verification (<code>authenticate</code>):</strong> Parses <code>Authorization: Bearer &lt;token&gt;</code> header. Rejects missing, malformed, expired, or tampered tokens with <code>401 Unauthorized</code> (<code>{ error: "UNAUTHORIZED", message: "..." }</code>).</li>
+      <li><strong>Higher-Order Wrapper (<code>withAuth</code>):</strong> Cleanly wraps any Lambda handler function. Decodes the token, attaches <code>event.user</code>, and intercepts authentication errors automatically without code duplication in controllers.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge badge-blue">Layer 2</span> Controllers / Handlers (<code>src/handlers/</code>)</div>
+    <ul>
+      <li><strong>Pure Presentation / Gateway Logic:</strong> Handlers are strictly HTTP controllers. They do not contain any database queries or business decision logic.</li>
+      <li><strong>Workflow:</strong> <code>withAuth</code> &rarr; <code>parseJsonBody</code> &rarr; call Validator &rarr; call Service &rarr; return HTTP 200/201 response envelope.</li>
+      <li><strong>Endpoints Handled:</strong>
+        <code>POST /auth/token</code>, <code>POST /customers</code>, <code>GET /customers/{id}</code>, <code>POST /customers/{id}/accounts</code>, <code>GET /customers/{id}/accounts</code>, <code>GET /accounts/{id}</code>, <code>POST /accounts/{id}/deposits</code>, <code>POST /accounts/{id}/withdrawals</code>, <code>POST /transfers</code>.
       </li>
     </ul>
   </div>
 
   <div class="card">
-    <div class="card-title">2. Accounts Handlers (<code>src/handlers/accounts.js</code>)</div>
-    <p>Implements customer account lifecycle and optimized query patterns:</p>
+    <div class="card-title"><span class="badge badge-amber">Layer 3</span> Validator Layer (<code>src/validators/</code>)</div>
     <ul>
-      <li><code>create(event)</code>:
-        <ul>
-          <li>Validates parent customer exists via <code>GetCommand</code> (returns <code>404</code> if not found).</li>
-          <li>Validates <code>type</code> (<code>CHECKING</code> or <code>SAVINGS</code>) and <code>currency</code> (<code>CAD</code> or <code>USD</code>).</li>
-          <li>Validates <code>initialBalance</code>: must be a non-negative finite number with at most 2 decimal places.</li>
-          <li>Persists to <code>Accounts</code> table with partition key <code>accountId</code> and indexed attribute <code>customerId</code>. Returns <code>201 Created</code>.</li>
-        </ul>
-      </li>
-      <li><code>list(event)</code> &mdash; <em>Crucial Optimization</em>:
-        <ul>
-          <li>Verifies customer exists first (returns <code>404</code> if not).</li>
-          <li><strong>Query vs Scan:</strong> Instead of executing a table-wide Scan with a filter, uses <code>QueryCommand</code> on the <strong><code>CustomerIdIndex</code> GSI</strong>.</li>
-          <li>Targets only that customer's partition in $O(1)$ time, saving read capacity units and scaling sub-linearly. Returns <code>200 OK</code> with <code>{ items: Account[] }</code>.</li>
-        </ul>
-      </li>
-      <li><code>get(event)</code>: Point read by <code>accountId</code> returning current account data including balance (200 / 404).</li>
+      <li><strong>Customer Validator (<code>customer.validator.js</code>):</strong> Validates <code>fullName</code> (non-empty string), <code>email</code> (RFC 5322 regex pattern). Validates <code>customerId</code> path parameter.</li>
+      <li><strong>Account Validator (<code>account.validator.js</code>):</strong> Validates <code>type</code> enum (<code>CHECKING</code>, <code>SAVINGS</code>), <code>currency</code> enum (<code>CAD</code>, <code>USD</code>), and <code>initialBalance</code> ($ge 0$, finite, $le 2$ decimal places).</li>
+      <li><strong>Transaction Validator (<code>transaction.validator.js</code>):</strong> Validates positive finite amounts ($le 2$ decimal places to prevent IEEE-754 precision bugs), currencies, and disallows self-transfers (<code>fromAccountId !== toAccountId</code>).</li>
+      <li><strong>Exported Functions:</strong> All functions are pure, exported, and unit-tested in isolation in <code>test/validators.test.js</code>.</li>
     </ul>
   </div>
 
   <div class="card">
-    <div class="card-title">3. Transactions Handlers (<code>src/handlers/transactions.js</code>) &mdash; Stretch Goals</div>
-    <p>Provides atomic balance operations and ACID fund transfers:</p>
+    <div class="card-title"><span class="badge badge-green">Layer 4</span> Service Layer (<code>src/services/</code>)</div>
     <ul>
-      <li><code>deposit(event)</code>:
+      <li><strong>Customer Service (<code>customer.service.js</code>):</strong> Generates <code>cust_${uuidv4()}</code>, assigns default status <code>ACTIVE</code> and ISO timestamp. Retrieves customer by ID; throws <code>HttpError.notFound</code> if not found.</li>
+      <li><strong>Account Service (<code>account.service.js</code>):</strong> Validates customer existence before account creation. Assigns <code>acct_${uuidv4()}</code> and status <code>OPEN</code>. For listing accounts, verifies customer existence first to ensure invalid IDs return 404 rather than ambiguous empty arrays.</li>
+      <li><strong>Transaction Service (<code>transaction.service.js</code>):</strong> Enforces financial rules: checks account existence, checks accounts are <code>OPEN</code>, checks currency matching, enforces overdraft prevention (<code>balance >= amount</code>, throws 409 Conflict if insufficient), and coordinates atomic transfer transactions.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge badge-blue">Layer 5</span> Repository Layer (<code>src/repositories/</code>)</div>
+    <ul>
+      <li><strong>Customer Repository (<code>customer.repository.js</code>):</strong> Encapsulates <code>findById</code> (<code>GetCommand</code>), <code>create</code> (<code>PutCommand</code>), and <code>delete</code> (<code>DeleteCommand</code>).</li>
+      <li><strong>Account Repository (<code>account.repository.js</code>):</strong>
         <ul>
-          <li>Validates amount (&gt; 0, max 2 decimals) and matching currency. Verifies account is <code>OPEN</code>.</li>
-          <li>Atomic balance increment via <code>UpdateCommand</code> with <code>SET balance = balance + :amount</code>.</li>
-          <li>Condition guard: <code>attribute_exists(accountId) AND #status = :openStatus AND currency = :currency</code>. Returns <code>200 OK</code>.</li>
-        </ul>
-      </li>
-      <li><code>withdraw(event)</code>:
-        <ul>
-          <li>Validates amount, currency match, and <code>OPEN</code> status. Rejects if balance &lt; amount with <code>409 Conflict</code>.</li>
-          <li>Atomic debit via <code>UpdateCommand</code>: <code>SET balance = balance - :amount</code>.</li>
-          <li>Concurrency guard: <code>ConditionExpression: "balance &gt;= :amount AND #status = :openStatus AND currency = :currency"</code>.</li>
-          <li>Catches <code>ConditionalCheckFailedException</code> to safely reject concurrent race collisions with <code>409 Conflict</code>.</li>
-        </ul>
-      </li>
-      <li><code>transfer(event)</code>:
-        <ul>
-          <li>Validates both accounts exist, are <code>OPEN</code>, share currency, and <code>fromAccountId !== toAccountId</code>.</li>
-          <li><strong>ACID Atomicity:</strong> Executes debit and credit together in a single <code>TransactWriteCommand</code> (<code>TransactWriteItems</code>). Either both operations commit or both roll back.</li>
-          <li>Debit condition: <code>balance &gt;= :amount</code>. If concurrent withdrawals deplete the balance, DynamoDB aborts the transaction with <code>TransactionCanceledException</code>, caught and returned as <code>409 Conflict</code>.</li>
+          <li>Point lookups via <code>GetCommand</code> on partition key <code>accountId</code> ($O(1)$).</li>
+          <li>Customer accounts query via <strong>Global Secondary Index (<code>CustomerIdIndex</code>)</strong> with <code>QueryCommand</code> ($O(1)$ partition lookup, <strong>zero table Scans</strong>).</li>
+          <li>Balance increments/decrements via atomic <code>UpdateCommand</code> with <code>ConditionExpression</code>.</li>
+          <li>Cross-account transfers via <strong>DynamoDB ACID <code>TransactWriteCommand</code></strong> (all-or-nothing debit and credit, zero risk of partial failure, with local emulator fallback).</li>
         </ul>
       </li>
     </ul>
@@ -342,68 +319,81 @@
 
   <div class="page-break"></div>
 
-  <h2>3. Automated Test Suite (37 Tests Across 11 Suites)</h2>
-  <div class="card">
-    <table style="margin: 0;">
-      <thead>
-        <tr>
-          <th>Test Suite File</th>
-          <th>Tests</th>
-          <th>What is Tested</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>test/customers.test.js</code></td>
-          <td><strong>9 Tests</strong></td>
-          <td>Happy path customer creation, UUID generation, status ACTIVE, missing fullName (400), whitespace fullName (400), invalid email regex (400), missing body (400), malformed JSON (400), point retrieval (200), missing customer (404), missing path param (400).</td>
-        </tr>
-        <tr>
-          <td><code>test/accounts.test.js</code></td>
-          <td><strong>13 Tests</strong></td>
-          <td>Creation with default initialBalance=0 (201), custom initialBalance (201), non-existent customer rejection (404), invalid type (400), invalid currency (400), negative balance (400), fractional cents &gt;2 decimals (400), GSI query execution (200), empty items array (200), listing non-existent customer (404), account retrieval by ID (200), missing account (404), missing path param (400).</td>
-        </tr>
-        <tr>
-          <td><code>test/transactions.test.js</code></td>
-          <td><strong>15 Tests</strong></td>
-          <td>Deposit happy path (200), deposit non-existent account (404), non-positive amount (400), currency mismatch (400), closed account (400), withdrawal happy path (200), insufficient funds (409), race condition simulation (409), missing account (404), atomic transfer happy path (200), self-transfer rejection (400), missing source/dest (404), insufficient funds transfer (409), currency mismatch (400), transaction collision rollback (409).</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <h2>4. Test Suite Summary (79 Tests Across 26 Test Suites)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Test Suite</th>
+        <th>File</th>
+        <th>Tests</th>
+        <th>Key Scenarios Tested</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Auth Middleware</strong></td>
+        <td><code>test/auth.middleware.test.js</code></td>
+        <td>6</td>
+        <td>Token signing, successful Bearer auth, missing header, malformed header, invalid/tampered token, <code>withAuth</code> injection.</td>
+      </tr>
+      <tr>
+        <td><strong>Validators</strong></td>
+        <td><code>test/validators.test.js</code></td>
+        <td>18</td>
+        <td>Customer name/email regex, account types/currencies, negative initial balances, fractional cents (>2 decimals), self-transfers.</td>
+      </tr>
+      <tr>
+        <td><strong>Services</strong></td>
+        <td><code>test/services.test.js</code></td>
+        <td>10</td>
+        <td>Customer creation/retrieval, account creation with parent verification, GSI list queries, deposit/withdraw rules, transfer overdraft checks (409).</td>
+      </tr>
+      <tr>
+        <td><strong>Repositories</strong></td>
+        <td><code>test/repositories.test.js</code></td>
+        <td>8</td>
+        <td><code>GetCommand</code>, <code>PutCommand</code>, <code>DeleteCommand</code>, GSI <code>CustomerIdIndex</code> <code>QueryCommand</code>, <code>UpdateCommand</code>, <code>TransactWriteCommand</code> atomicity.</td>
+      </tr>
+      <tr>
+        <td><strong>Customer Handlers</strong></td>
+        <td><code>test/customers.test.js</code></td>
+        <td>9</td>
+        <td>Authenticated <code>POST /customers</code> (201), <code>GET /customers/{id}</code> (200), 400 validations, 404 not found.</td>
+      </tr>
+      <tr>
+        <td><strong>Account Handlers</strong></td>
+        <td><code>test/accounts.test.js</code></td>
+        <td>13</td>
+        <td>Authenticated <code>POST /accounts</code> (201), <code>GET /accounts</code> via GSI (200), <code>GET /accounts/{id}</code> (200), 400 validations, 404 not found.</td>
+      </tr>
+      <tr>
+        <td><strong>Transaction Handlers</strong></td>
+        <td><code>test/transactions.test.js</code></td>
+        <td>15</td>
+        <td>Deposits (200), withdrawals (200), overdraft conflict (409), atomic transfers (200), currency mismatch (400), race condition collision (409).</td>
+      </tr>
+    </tbody>
+  </table>
 
-  <h2>4. Developer Experience & Local Infrastructure Scripts</h2>
+  <h2>5. How to Present this in Technical Interviews</h2>
   <div class="card">
-    <ul>
-      <li><strong><code>scripts/dev.js</code> (Unified Dev Startup):</strong>
-        <ul>
-          <li>Allows the entire environment to run via <code>npm run dev</code> in a single command.</li>
-          <li>Auto-frees ports 8000, 3000, and 3002 before launch, completely eliminating <code>EADDRINUSE</code> errors.</li>
-          <li>Auto-creates <code>.env</code> from <code>.env.example</code> if missing.</li>
-          <li>Spawns local DynamoDB, seeds tables, and starts serverless-offline.</li>
-        </ul>
-      </li>
-      <li><strong><code>scripts/start-local-db.js</code> (In-Memory DynamoDB):</strong>
-        <ul>
-          <li>Runs an in-memory DynamoDB server using <code>dynalite</code>, meaning reviewers don't even need Docker Desktop installed.</li>
-        </ul>
-      </li>
-      <li><strong><code>scripts/capture-all-screenshots.js</code> (Automated Visual QA):</strong>
-        <ul>
-          <li>Runs all 9 endpoints against localhost:3000, generates visual HTML reports, and captures PNG screenshots via headless Microsoft Edge.</li>
-        </ul>
-      </li>
-    </ul>
-  </div>
-
-  <h2>5. How to Explain Your Changes in an Interview</h2>
-  <div class="card">
+    <div class="card-title">1. Pitching the Architecture</div>
     <div class="quote-box">
-      <strong>Elevator Summary to Give the Interviewer:</strong><br />
-      "I replaced the initial 501 stubs across all three handlers—customers, accounts, and transactions—with production-ready logic.
-      I ensured strict compliance with the OpenAPI 3.0 specification for all status codes and error shapes.<br /><br />
-      For data access, I optimized customer account queries by using a Global Secondary Index (GSI) rather than table Scans. For financial transfers, I used DynamoDB TransactWriteItems to guarantee ACID atomicity across accounts, combined with optimistic concurrency condition expressions to prevent overdrafts and race conditions.<br /><br />
-      Finally, I verified the entire implementation with a 37-test automated test suite using Node's native test runner and aws-sdk-client-mock, and built a unified 1-command startup script for seamless local execution."
+      "I built a clean 4-tier architecture following Domain-Driven Design and SOLID principles: Handlers act purely as HTTP controllers; Validators enforce contract boundaries and data formats; Services encapsulate banking business rules; and Repositories isolate DynamoDB operations. Additionally, all endpoints are guarded by a JWT Bearer authentication middleware."
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">2. Why Separate Services & Repositories?</div>
+    <div class="quote-box">
+      "Separation of concerns is critical in financial applications. Keeping business rules (such as overdraft checks, currency compatibility, and account status validation) inside Services makes them testable in pure memory without mocking database calls. Repositories isolate AWS SDK specifics (like GSI Query parameters, ConditionExpressions, and TransactWriteItems), allowing database optimizations or migrations without altering business rules."
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">3. Why Dedicated Validators?</div>
+    <div class="quote-box">
+      "Dedicated validators provide a fail-fast boundary right at the controller entry. They validate types, regular expressions, and decimal precision before any domain service or database connection is invoked, preventing malformed data from ever touching business logic."
     </div>
   </div>
 

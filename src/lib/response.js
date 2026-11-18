@@ -3,6 +3,8 @@
 const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token",
+  "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT,DELETE",
 };
 
 function json(statusCode, body) {
@@ -23,6 +25,14 @@ function created(body) {
 
 function badRequest(message, error = "BAD_REQUEST") {
   return json(400, { error, message });
+}
+
+function unauthorized(message = "Unauthorized: Missing or invalid token", error = "UNAUTHORIZED") {
+  return json(401, { error, message });
+}
+
+function forbidden(message = "Forbidden", error = "FORBIDDEN") {
+  return json(403, { error, message });
 }
 
 function notFound(message, error = "NOT_FOUND") {
@@ -76,6 +86,8 @@ module.exports = {
   ok,
   created,
   badRequest,
+  unauthorized,
+  forbidden,
   notFound,
   conflict,
   notImplemented,

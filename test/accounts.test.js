@@ -7,17 +7,36 @@ const { GetCommand, PutCommand, QueryCommand } = require("@aws-sdk/lib-dynamodb"
 
 const { docClient, TABLES } = require("../src/lib/dynamodb");
 const accountsHandler = require("../src/handlers/accounts");
+const { generateToken } = require("../src/middlewares/auth.middleware");
 
 const ddbMock = mockClient(docClient);
+const validToken = generateToken({ sub: "test_user", role: "admin" });
+const authHeaders = { Authorization: `Bearer ${validToken}` };
 
 describe("Accounts Handler", () => {
   beforeEach(() => {
     ddbMock.reset();
   });
 
+  describe("Authentication Guard", () => {
+    test("returns 401 when Authorization header is missing on create", async () => {
+      const response = await accountsHandler.create({});
+      assert.equal(response.statusCode, 401);
+    });
+
+    test("returns 401 when Authorization header is missing on list", async () => {
+      const response = await accountsHandler.list({ pathParameters: { customerId: "cust_001" } });
+      assert.equal(response.statusCode, 401);
+    });
+
+    test("returns 401 when Authorization header is missing on get", async () => {
+      const response = await accountsHandler.get({ pathParameters: { accountId: "acct_001" } });
+      assert.equal(response.statusCode, 401);
+    });
+  });
+
   describe("POST /customers/{customerId}/accounts (create)", () => {
     test("successfully creates an account with default initialBalance of 0", async () => {
-      // Mock customer exists
       ddbMock
         .on(GetCommand, {
           TableName: TABLES.customers,
@@ -30,6 +49,7 @@ describe("Accounts Handler", () => {
       ddbMock.on(PutCommand).resolves({});
 
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
         body: JSON.stringify({
           type: "CHECKING",
@@ -49,7 +69,6 @@ describe("Accounts Handler", () => {
       assert.equal(body.status, "OPEN");
       assert.ok(body.createdAt);
 
-      // Verify PutCommand payload
       const putCalls = ddbMock.commandCalls(PutCommand);
       assert.equal(putCalls.length, 1);
       assert.equal(putCalls[0].args[0].input.TableName, TABLES.accounts);
@@ -70,6 +89,7 @@ describe("Accounts Handler", () => {
       ddbMock.on(PutCommand).resolves({});
 
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
         body: JSON.stringify({
           type: "SAVINGS",
@@ -96,6 +116,7 @@ describe("Accounts Handler", () => {
         .resolves({});
 
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_nonexistent" },
         body: JSON.stringify({
           type: "CHECKING",
@@ -112,6 +133,7 @@ describe("Accounts Handler", () => {
 
     test("returns 400 for invalid account type", async () => {
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
         body: JSON.stringify({
           type: "INVALID_TYPE",
@@ -129,6 +151,7 @@ describe("Accounts Handler", () => {
 
     test("returns 400 for invalid currency", async () => {
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
         body: JSON.stringify({
           type: "CHECKING",
@@ -146,6 +169,7 @@ describe("Accounts Handler", () => {
 
     test("returns 400 for negative initialBalance", async () => {
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
         body: JSON.stringify({
           type: "CHECKING",
@@ -164,6 +188,7 @@ describe("Accounts Handler", () => {
 
     test("returns 400 for initialBalance with more than 2 decimal places", async () => {
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
         body: JSON.stringify({
           type: "CHECKING",
@@ -182,7 +207,6 @@ describe("Accounts Handler", () => {
 
   describe("GET /customers/{customerId}/accounts (list)", () => {
     test("successfully queries accounts using CustomerIdIndex GSI", async () => {
-      // Customer exists
       ddbMock
         .on(GetCommand, {
           TableName: TABLES.customers,
@@ -224,6 +248,7 @@ describe("Accounts Handler", () => {
         });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
       };
 
@@ -233,7 +258,6 @@ describe("Accounts Handler", () => {
       const body = JSON.parse(response.body);
       assert.deepEqual(body, { items: accounts });
 
-      // Verify QueryCommand parameters (GSI was queried, not Scan)
       const queryCalls = ddbMock.commandCalls(QueryCommand);
       assert.equal(queryCalls.length, 1);
       assert.equal(queryCalls[0].args[0].input.IndexName, "CustomerIdIndex");
@@ -253,6 +277,7 @@ describe("Accounts Handler", () => {
       ddbMock.on(QueryCommand).resolves({ Items: [] });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_001" },
       };
 
@@ -272,6 +297,7 @@ describe("Accounts Handler", () => {
         .resolves({});
 
       const event = {
+        headers: authHeaders,
         pathParameters: { customerId: "cust_nonexistent" },
       };
 
@@ -305,6 +331,7 @@ describe("Accounts Handler", () => {
         });
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_001" },
       };
 
@@ -320,6 +347,7 @@ describe("Accounts Handler", () => {
       ddbMock.on(GetCommand).resolves({});
 
       const event = {
+        headers: authHeaders,
         pathParameters: { accountId: "acct_999" },
       };
 
@@ -331,7 +359,7 @@ describe("Accounts Handler", () => {
     });
 
     test("returns 400 when accountId path param is missing", async () => {
-      const event = { pathParameters: {} };
+      const event = { headers: authHeaders, pathParameters: {} };
       const response = await accountsHandler.get(event);
       assert.equal(response.statusCode, 400);
 
@@ -340,4 +368,3 @@ describe("Accounts Handler", () => {
     });
   });
 });
-
